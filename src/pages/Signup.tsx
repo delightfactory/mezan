@@ -77,6 +77,19 @@ export const Signup: React.FC = () => {
             />
           </div>
 
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">تأكيد كلمة المرور</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-left outline-none transition-all focus:border-primary-500 focus:ring-2 focus:ring-primary-100"
+              dir="ltr"
+              minLength={6}
+              required
+            />
+          </div>
+
           <button
             type="submit"
             disabled={loading}
