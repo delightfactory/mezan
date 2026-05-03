@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 260" role="img" aria-label="mezan logo">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#12BFA6"/><stop offset="1" stop-color="#045B52"/></linearGradient></defs>
+  <rect x="18" y="22" width="216" height="216" rx="48" fill="url(#g)"/>
+  <g fill="#fff"><path d="M65 159V78c0-13 16-20 25-11l36 36 36-36c9-9 25-2 25 11v81h-29v-48l-32 32-32-32v48z"/><rect x="65" y="178" width="122" height="12" rx="6"/><circle cx="126" cy="184" r="15"/></g>
+  <text x="275" y="126" font-family="Inter, Nunito, Arial, sans-serif" font-size="92" font-weight="800" fill="#0B7F6E" letter-spacing="-3">mezan</text>
+  <text x="277" y="185" font-family="Cairo, IBM Plex Sans Arabic, Tahoma, Arial, sans-serif" font-size="33" fill="#323A3A" direction="rtl">نظّم مصروفاتك.. وحقق التوازن</text>
+</svg>

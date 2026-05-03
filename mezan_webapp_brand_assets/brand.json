@@ -1,0 +1,21 @@
+{
+  "app_name": "mezan",
+  "app_name_ar": "ميزان",
+  "slogan_ar": "نظّم مصروفاتك.. وحقق التوازن",
+  "description_ar": "تطبيق يساعد ربات المنازل على إدارة المصروفات والالتزامات وأوجه الإنفاق اليومية بوضوح وتوازن.",
+  "colors": {
+    "primary": "#12BFA6",
+    "primary_dark": "#0B7F6E",
+    "primary_deep": "#045B52",
+    "mint": "#7BE3D5",
+    "ink": "#042A2D",
+    "text": "#323A3A",
+    "muted": "#6B7474",
+    "surface": "#F3F6F4",
+    "white": "#FFFFFF"
+  },
+  "typography": {
+    "latin": "Rounded geometric sans / system fallback: Inter, Nunito, Arial, sans-serif",
+    "arabic": "Cairo or IBM Plex Sans Arabic recommended. Fallback: Tahoma, Arial, sans-serif"
+  }
+}

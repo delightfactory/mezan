@@ -1,0 +1,39 @@
+{
+  "name": "mezan - نظّم مصروفاتك وحقق التوازن",
+  "short_name": "mezan",
+  "description": "تطبيق يساعد ربات المنازل على إدارة المصروفات والالتزامات وأوجه الإنفاق اليومية بوضوح وتوازن.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F3F6F4",
+  "theme_color": "#0B7F6E",
+  "dir": "rtl",
+  "lang": "ar-EG",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/maskable-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

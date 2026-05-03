@@ -1,0 +1,30 @@
+:root {
+  --mezan-primary: #12BFA6;
+  --mezan-primary-dark: #0B7F6E;
+  --mezan-primary-deep: #045B52;
+  --mezan-mint: #7BE3D5;
+  --mezan-ink: #042A2D;
+  --mezan-text: #323A3A;
+  --mezan-muted: #6B7474;
+  --mezan-surface: #F3F6F4;
+  --mezan-white: #ffffff;
+  --mezan-radius-app-icon: 22%;
+  --mezan-font-latin: Inter, Nunito, Arial, sans-serif;
+  --mezan-font-arabic: Cairo, "IBM Plex Sans Arabic", Tahoma, Arial, sans-serif;
+}
+
+.mezan-gradient {
+  background: linear-gradient(135deg, var(--mezan-primary), var(--mezan-primary-deep));
+}
+
+.mezan-logo-text {
+  font-family: var(--mezan-font-latin);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--mezan-primary-dark);
+}
+
+.mezan-slogan {
+  font-family: var(--mezan-font-arabic);
+  color: var(--mezan-text);
+}
