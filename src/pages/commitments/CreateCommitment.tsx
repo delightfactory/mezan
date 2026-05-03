@@ -66,15 +66,15 @@ export const CreateCommitment: React.FC = () => {
     const priority = Number(formData.p_priority_level);
 
     if (!formData.p_name.trim()) {
-      setError('???? ????? ??? ????????.');
+      setError('يرجى تعبئة اسم الالتزام.');
       return;
     }
     if (!formData.p_category_id) {
-      setError('???? ?????? ???????.');
+      setError('يرجى اختيار التصنيف.');
       return;
     }
     if (amount <= 0) {
-      setError('?????? ??? ?? ???? ???? ?? ???.');
+      setError('المبلغ يجب أن يكون أكبر من صفر.');
       return;
     }
 
@@ -115,7 +115,7 @@ export const CreateCommitment: React.FC = () => {
         <button onClick={() => navigate(-1)} className="p-2 bg-white rounded-full shadow-sm text-gray-500 hover:text-gray-900 transition-colors">
           <ArrowRight size={24} />
         </button>
-        <h2 className="text-xl font-bold text-gray-900">?????? ????</h2>
+        <h2 className="text-xl font-bold text-gray-900">إضافة التزام</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -126,11 +126,11 @@ export const CreateCommitment: React.FC = () => {
         )}
 
         <div className="space-y-1">
-          <label className="text-sm font-bold text-gray-700 mr-1">??? ????????</label>
+          <label className="text-sm font-bold text-gray-700 mr-1">اسم الالتزام</label>
           <input
             type="text"
             required
-            placeholder="?????: ??? ???????"
+            placeholder="مثال: قسط السيارة"
             className="w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-primary-500 transition-colors"
             value={formData.p_name}
             onChange={(e) => setFormData({ ...formData, p_name: e.target.value })}
@@ -139,7 +139,7 @@ export const CreateCommitment: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-sm font-bold text-gray-700 mr-1">?????? (?.?)</label>
+            <label className="text-sm font-bold text-gray-700 mr-1">المبلغ (ج.م)</label>
             <input
               type="number"
               required
@@ -151,31 +151,31 @@ export const CreateCommitment: React.FC = () => {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-bold text-gray-700 mr-1">???????</label>
+            <label className="text-sm font-bold text-gray-700 mr-1">التكرار</label>
             <select
               required
               className="w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-primary-500 bg-white transition-colors"
               value={formData.p_frequency}
               onChange={(e) => setFormData({ ...formData, p_frequency: e.target.value as any })}
             >
-              <option value="MONTHLY">????</option>
-              <option value="QUARTERLY">?? 3 ????</option>
-              <option value="SEMI_ANNUAL">?? 6 ????</option>
-              <option value="ANNUAL">????</option>
-              <option value="ONE_TIME">??? ?????</option>
+              <option value="MONTHLY">شهري</option>
+              <option value="QUARTERLY">كل 3 أشهر</option>
+              <option value="SEMI_ANNUAL">كل 6 أشهر</option>
+              <option value="ANNUAL">سنوي</option>
+              <option value="ONE_TIME">مرة واحدة</option>
             </select>
           </div>
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-bold text-gray-700 mr-1">???????</label>
+          <label className="text-sm font-bold text-gray-700 mr-1">التصنيف</label>
           <select
             required
             className="w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-primary-500 bg-white transition-colors"
             value={formData.p_category_id}
             onChange={(e) => setFormData({ ...formData, p_category_id: e.target.value })}
           >
-            <option value="">???? ???????...</option>
+            <option value="">اختر التصنيف...</option>
             {categories.map(cat => (
               <option key={cat.id} value={cat.id}>{cat.name_ar}</option>
             ))}
@@ -184,7 +184,7 @@ export const CreateCommitment: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-sm font-bold text-gray-700 mr-1">????? ???????</label>
+            <label className="text-sm font-bold text-gray-700 mr-1">تاريخ البداية</label>
             <input
               type="date"
               required
@@ -194,7 +194,7 @@ export const CreateCommitment: React.FC = () => {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-bold text-gray-700 mr-1">????? ??????? (???????)</label>
+            <label className="text-sm font-bold text-gray-700 mr-1">تاريخ النهاية (اختياري)</label>
             <input
               type="date"
               className="w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-primary-500 transition-colors"
@@ -205,22 +205,22 @@ export const CreateCommitment: React.FC = () => {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-bold text-gray-700 mr-1">??????? ??????? ????? (???????)</label>
+          <label className="text-sm font-bold text-gray-700 mr-1">المحفظة الافتراضية للدفع (اختياري)</label>
           <select
             className="w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-primary-500 bg-white transition-colors"
             value={formData.p_wallet_id}
             onChange={(e) => setFormData({ ...formData, p_wallet_id: e.target.value })}
           >
-            <option value="">?? ???? ????? ?????</option>
+            <option value="">لا تحدد محفظة تلقائية</option>
             {wallets.map(w => (
-              <option key={w.id} value={w.id}>{w.name} ({w.balance.toLocaleString()} ?.?)</option>
+              <option key={w.id} value={w.id}>{w.name} ({w.balance.toLocaleString()} ج.م)</option>
             ))}
           </select>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-sm font-bold text-gray-700 mr-1">???????? (1-100)</label>
+            <label className="text-sm font-bold text-gray-700 mr-1">الأولوية (1-100)</label>
             <input
               type="number"
               inputMode="numeric"
@@ -239,7 +239,7 @@ export const CreateCommitment: React.FC = () => {
               checked={formData.p_auto_deduct}
               onChange={(e) => setFormData({ ...formData, p_auto_deduct: e.target.checked })}
             />
-            <label htmlFor="auto_deduct" className="text-sm font-bold text-gray-700">??? ??? ??? ??????</label>
+            <label htmlFor="auto_deduct" className="text-sm font-bold text-gray-700">خصم آلي عند الاستحقاق</label>
           </div>
         </div>
 
@@ -253,7 +253,7 @@ export const CreateCommitment: React.FC = () => {
           ) : (
             <>
               <Save size={20} />
-              <span>??? ????????</span>
+              <span>حفظ الالتزام</span>
             </>
           )}
         </button>

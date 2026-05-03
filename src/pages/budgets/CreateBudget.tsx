@@ -62,11 +62,11 @@ export const CreateBudget: React.FC = () => {
     const amount = Number(formData.p_allocated_amount);
 
     if (!formData.p_category_id) {
-      setError('???? ?????? ???????.');
+      setError('يرجى اختيار التصنيف.');
       return;
     }
     if (amount <= 0) {
-      setError('?????? ?????? ??? ?? ???? ???? ?? ???.');
+      setError('المبلغ المخصص يجب أن يكون أكبر من صفر.');
       return;
     }
 
@@ -103,7 +103,7 @@ export const CreateBudget: React.FC = () => {
         <button onClick={() => navigate(-1)} className="p-2 bg-white rounded-full shadow-sm text-gray-500 hover:text-gray-900 transition-colors">
           <ArrowRight size={24} />
         </button>
-        <h2 className="text-xl font-bold text-gray-900">??????? ?????</h2>
+        <h2 className="text-xl font-bold text-gray-900">ميزانية جديدة</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -114,14 +114,14 @@ export const CreateBudget: React.FC = () => {
         )}
 
         <div className="space-y-1">
-          <label className="text-sm font-bold text-gray-700 mr-1">???????</label>
+          <label className="text-sm font-bold text-gray-700 mr-1">التصنيف</label>
           <select
             required
             className="w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-purple-500 bg-white transition-colors"
             value={formData.p_category_id}
             onChange={(e) => setFormData({ ...formData, p_category_id: e.target.value })}
           >
-            <option value="">???? ???????...</option>
+            <option value="">اختر التصنيف...</option>
             {categories.map(cat => (
               <option key={cat.id} value={cat.id}>{cat.name_ar}</option>
             ))}
@@ -129,7 +129,7 @@ export const CreateBudget: React.FC = () => {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-bold text-gray-700 mr-1">?????? ?????? (?.?)</label>
+          <label className="text-sm font-bold text-gray-700 mr-1">المبلغ المخصص (ج.م)</label>
           <input
             type="number"
             required
@@ -143,7 +143,7 @@ export const CreateBudget: React.FC = () => {
 
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-sm font-bold text-gray-700 mr-1">????? ??????</label>
+            <label className="text-sm font-bold text-gray-700 mr-1">تاريخ البداية</label>
             <input
               type="date"
               required
@@ -153,7 +153,7 @@ export const CreateBudget: React.FC = () => {
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-bold text-gray-700 mr-1">????? ??????</label>
+            <label className="text-sm font-bold text-gray-700 mr-1">تاريخ النهاية</label>
             <input
               type="date"
               required
@@ -165,15 +165,15 @@ export const CreateBudget: React.FC = () => {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-bold text-gray-700 mr-1">??? ??????</label>
+          <label className="text-sm font-bold text-gray-700 mr-1">نوع الدورة</label>
           <select
             className="w-full rounded-2xl border border-gray-200 p-4 outline-none focus:border-purple-500 bg-white transition-colors"
             value={formData.p_period}
             onChange={(e) => setFormData({ ...formData, p_period: e.target.value as any })}
           >
-            <option value="MONTHLY">???? (Monthly)</option>
-            <option value="CYCLE">???? ????? (Cycle)</option>
-            <option value="CUSTOM">???? (Custom)</option>
+            <option value="MONTHLY">شهري (Monthly)</option>
+            <option value="CYCLE">دورة مخصصة (Cycle)</option>
+            <option value="CUSTOM">مخصص (Custom)</option>
           </select>
         </div>
 
@@ -187,7 +187,7 @@ export const CreateBudget: React.FC = () => {
           ) : (
             <>
               <Save size={20} />
-              <span>??? ?????????</span>
+              <span>حفظ الميزانية</span>
             </>
           )}
         </button>
