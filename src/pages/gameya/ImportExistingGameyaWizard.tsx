@@ -215,7 +215,9 @@ export const ImportExistingGameyaWizard: React.FC<Props> = ({ onBack }) => {
                       onChange={(e) => setTurnFrequency(e.target.value as TurnFrequency)}
                       className="block w-full rounded-xl border-gray-300 p-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                     >
-                      {Object.entries(frequencyLabels).map(([key, label]) => (
+                      {Object.entries(frequencyLabels)
+                        .filter(([key]) => key !== 'DAILY')
+                        .map(([key, label]) => (
                         <option key={key} value={key}>{label}</option>
                       ))}
                     </select>

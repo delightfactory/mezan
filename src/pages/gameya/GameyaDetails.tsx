@@ -238,7 +238,7 @@ export const GameyaDetails: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex flex-col items-end">
-                      <p className="font-bold text-gray-900 mb-1">{inst.amount.toLocaleString()} ?.?</p>
+                      <p className="font-bold text-gray-900 mb-1">{inst.amount.toLocaleString()} ج.م</p>
                       {inst.status === 'UPCOMING' || inst.status === 'OVERDUE' ? (
                         <Link
                           to={`/gameya/${circle.id}/installments/${inst.id}/pay`}

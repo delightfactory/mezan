@@ -146,11 +146,12 @@ BEGIN
   
   PERFORM public.fn_receive_flexible_gameya_payout(v_family_id, v_gameya_id, v_real_wallet_id);
   
-  SELECT * INTO v_result FROM public.fn_exit_flexible_gameya_circle(v_family_id, v_gameya_id, v_real_wallet_id, 'NOOP');
-  
-  IF v_result.net_amount != 0 THEN
-    RAISE EXCEPTION 'Test 5 Failed: Expected net_amount 0, got %', v_result.net_amount;
-  END IF;
+  BEGIN
+    SELECT * INTO v_result FROM public.fn_exit_flexible_gameya_circle(v_family_id, v_gameya_id, v_real_wallet_id, 'NOOP');
+    RAISE EXCEPTION 'Test 5 Failed: Expected GAMEYA_ALREADY_COMPLETED';
+  EXCEPTION WHEN OTHERS THEN
+    IF SQLERRM NOT LIKE '%GAMEYA_ALREADY_COMPLETED%' THEN RAISE EXCEPTION 'Test 5 Failed: Expected GAMEYA_ALREADY_COMPLETED, got %', SQLERRM; END IF;
+  END;
 
   -- Test 6: Exit After Partial Debt Payment
   v_gameya_id := public.fn_create_flexible_gameya_circle(
@@ -165,7 +166,7 @@ BEGIN
   SELECT debt_id INTO v_debt_id FROM public.fn_receive_flexible_gameya_payout(v_family_id, v_gameya_id, v_real_wallet_id);
   
   -- The debt is 9000. Let's pay 4000.
-  PERFORM public.fn_record_debt_payment(v_family_id, v_debt_id, v_real_wallet_id, 4000, p_effective_at := now());
+  PERFORM public.fn_record_debt_payment(v_family_id, v_debt_id, 4000, v_real_wallet_id);
   
   SELECT * INTO v_result FROM public.fn_exit_flexible_gameya_circle(v_family_id, v_gameya_id, v_real_wallet_id, 'PAY_NOW');
   

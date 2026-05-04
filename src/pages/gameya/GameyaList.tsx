@@ -100,7 +100,7 @@ export const GameyaList: React.FC = () => {
                   <div>
                     <h3 className="font-bold text-gray-900">{circle.name}</h3>
                     <p className="text-xs text-gray-500 mt-1">
-                      الدفعة: <span className="font-bold text-gray-700">{circle.monthly_installment.toLocaleString()} ج.م</span>
+                      الدفعة: <span className="font-bold text-gray-700">{(circle.is_flexible ? circle.installment_amount : circle.monthly_installment)?.toLocaleString() || 0} ج.م</span>
                     </p>
                   </div>
                 </div>
@@ -111,7 +111,7 @@ export const GameyaList: React.FC = () => {
               
               <div className="flex items-center justify-between pt-3 border-t border-gray-50 text-sm">
                 <div className="text-gray-500 text-xs">
-                  دور القبض الخاص بك: <span className="font-bold text-gray-900">الشهر {circle.payout_month}</span>
+                  دور القبض الخاص بك: <span className="font-bold text-gray-900">{circle.is_flexible ? 'الدور ' + circle.payout_turn : 'الشهر ' + circle.payout_month}</span>
                 </div>
                 <ChevronLeft size={16} className="text-gray-400" />
               </div>
