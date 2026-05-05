@@ -10,6 +10,8 @@ import { Category, Wallet } from '../../types/models';
 import { getArabicErrorMessage } from '../../utils/errorHandler';
 import { WalletSelect } from '../../components/WalletSelect';
 import { getDefaultWalletId } from '../../utils/walletHelpers';
+import { createAttachmentService } from '../../services/attachmentService';
+import { Paperclip, X } from 'lucide-react';
 
 export const AddExpense: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +24,7 @@ export const AddExpense: React.FC = () => {
   const [walletId, setWalletId] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [description, setDescription] = useState('');
+  const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -29,6 +32,7 @@ export const AddExpense: React.FC = () => {
   const ledgerService = createLedgerService(supabase);
   const walletService = createWalletService(supabase);
   const categoryService = createCategoryService(supabase);
+  const attachmentService = createAttachmentService(supabase);
 
   useEffect(() => {
     async function fetchData() {
@@ -86,7 +90,7 @@ export const AddExpense: React.FC = () => {
     setError(null);
 
     try {
-      await ledgerService.recordExpense({
+      const transactionId = await ledgerService.recordExpense({
         p_family_id: familyId,
         p_amount: Number(amount),
         p_from_wallet_id: walletId,
@@ -94,6 +98,21 @@ export const AddExpense: React.FC = () => {
         p_description: description || undefined,
         p_effective_at: new Date().toISOString(),
       });
+
+      if (file && typeof transactionId === 'string') {
+        try {
+          await attachmentService.uploadAttachment({
+            familyId,
+            transactionId,
+            file,
+            attachmentType: 'RECEIPT'
+          });
+        } catch (uploadErr) {
+          console.error("Upload error:", uploadErr);
+          alert("تم حفظ المصروف بنجاح، لكن فشل رفع الإيصال: " + getArabicErrorMessage(uploadErr) + "\nيمكنك إضافته لاحقاً من تفاصيل المصروف.");
+        }
+      }
+
       navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(getArabicErrorMessage(err));
@@ -168,6 +187,41 @@ export const AddExpense: React.FC = () => {
             className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none transition-all focus:border-red-500 focus:ring-2 focus:ring-red-100"
             placeholder="مثال: بقالة أو فواتير"
           />
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium text-gray-700">إرفاق إيصال / فاتورة (اختياري)</label>
+          <div className="flex items-center gap-3">
+            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 w-full">
+              <Paperclip size={18} />
+              <span>{file ? 'تغيير الملف' : 'اختر ملفاً'}</span>
+              <input
+                type="file"
+                className="hidden"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    setFile(e.target.files[0]);
+                  }
+                }}
+              />
+            </label>
+            {file && (
+              <div className="flex flex-1 items-center justify-between rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm">
+                <span className="truncate text-gray-700 font-medium max-w-[150px]" dir="ltr">
+                  {file.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setFile(null)}
+                  className="text-red-500 hover:text-red-700 rounded-full p-1 bg-red-50"
+                  title="إزالة"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <button type="submit" disabled={submitting} className="mt-4 w-full rounded-xl bg-red-600 py-4 font-bold text-white transition-colors hover:bg-red-700 disabled:opacity-70">

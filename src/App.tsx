@@ -11,6 +11,8 @@ import { AddIncome } from './pages/transactions/AddIncome';
 import { AddExpense } from './pages/transactions/AddExpense';
 import { Transfer } from './pages/transactions/Transfer';
 import { TransactionsList } from './pages/transactions/TransactionsList';
+import { TransactionDetails } from './pages/transactions/TransactionDetails';
+import { EditExpenseTransaction } from './pages/transactions/EditExpenseTransaction';
 import { MonthlyReports } from './pages/reports/MonthlyReports';
 import { DebtsList } from './pages/debts/DebtsList';
 import { ReceiveLoan } from './pages/debts/ReceiveLoan';
@@ -78,6 +80,8 @@ export const App: React.FC = () => {
             <Route path="transactions/income" element={<AddIncome />} />
             <Route path="transactions/expense" element={<AddExpense />} />
             <Route path="transactions/transfer" element={<Transfer />} />
+            <Route path="transactions/:id" element={<TransactionDetails />} />
+            <Route path="transactions/:id/edit" element={<EditExpenseTransaction />} />
             <Route path="reports/monthly" element={<MonthlyReports />} />
             <Route path="debts" element={<DebtsList />} />
             <Route path="debts/receive-loan" element={<ReceiveLoan />} />

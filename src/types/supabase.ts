@@ -1182,6 +1182,82 @@ export type Database = {
           },
         ]
       }
+      transaction_attachments: {
+        Row: {
+          attachment_type: string
+          created_at: string
+          deleted_at: string | null
+          family_id: string
+          file_name: string
+          file_size_bytes: number
+          id: string
+          metadata: Json
+          mime_type: string
+          status: string
+          storage_bucket: string
+          storage_path: string
+          transaction_id: string
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          attachment_type?: string
+          created_at?: string
+          deleted_at?: string | null
+          family_id: string
+          file_name: string
+          file_size_bytes: number
+          id?: string
+          metadata?: Json
+          mime_type: string
+          status?: string
+          storage_bucket?: string
+          storage_path: string
+          transaction_id: string
+          updated_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          attachment_type?: string
+          created_at?: string
+          deleted_at?: string | null
+          family_id?: string
+          file_name?: string
+          file_size_bytes?: number
+          id?: string
+          metadata?: Json
+          mime_type?: string
+          status?: string
+          storage_bucket?: string
+          storage_path?: string
+          transaction_id?: string
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transaction_attachments_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_attachments_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transaction_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       transaction_links: {
         Row: {
           created_at: string
@@ -1363,6 +1439,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      fn_attach_transaction_receipt: {
+        Args: {
+          p_attachment_type?: string
+          p_family_id: string
+          p_file_name: string
+          p_file_size_bytes: number
+          p_metadata?: Json
+          p_mime_type: string
+          p_storage_path: string
+          p_transaction_id: string
+        }
+        Returns: string
+      }
       fn_calculate_safe_to_spend: {
         Args: { p_family_id: string }
         Returns: number
@@ -1382,6 +1471,23 @@ export type Database = {
           p_new_payout_turn: number
         }
         Returns: undefined
+      }
+      fn_correct_expense_transaction: {
+        Args: {
+          p_family_id: string
+          p_new_amount: number
+          p_new_category_id: string
+          p_new_description?: string
+          p_new_effective_at?: string
+          p_new_from_wallet_id: string
+          p_new_notes?: string
+          p_original_txn_id: string
+          p_receipt_mode?: string
+        }
+        Returns: {
+          adjustment_id: string
+          reversal_id: string
+        }[]
       }
       fn_correct_transaction: {
         Args: {
@@ -1476,6 +1582,10 @@ export type Database = {
           family_id: string
           member_id: string
         }[]
+      }
+      fn_delete_transaction_receipt: {
+        Args: { p_attachment_id: string; p_family_id: string }
+        Returns: undefined
       }
       fn_disburse_loan: {
         Args: {
@@ -1688,6 +1798,18 @@ export type Database = {
           payment_txn_id: string
         }[]
       }
+      fn_replace_transaction_receipt: {
+        Args: {
+          p_family_id: string
+          p_metadata?: Json
+          p_new_file_name: string
+          p_new_file_size_bytes: number
+          p_new_mime_type: string
+          p_new_storage_path: string
+          p_old_attachment_id: string
+        }
+        Returns: string
+      }
       fn_reschedule_debt: {
         Args: {
           p_debt_id: string
@@ -1794,6 +1916,10 @@ export type Database = {
         | "BUDGET_CREATED"
         | "DEBT_WRITTEN_OFF"
         | "PAYROLL_DEDUCTION"
+        | "RECEIPT_ATTACHED"
+        | "RECEIPT_REPLACED"
+        | "RECEIPT_DELETED"
+        | "EXPENSE_CORRECTED"
       budget_period: "CYCLE" | "MONTHLY" | "CUSTOM"
       category_behavior:
         | "FIXED_ESSENTIAL"
@@ -2013,6 +2139,10 @@ export const Constants = {
         "BUDGET_CREATED",
         "DEBT_WRITTEN_OFF",
         "PAYROLL_DEDUCTION",
+        "RECEIPT_ATTACHED",
+        "RECEIPT_REPLACED",
+        "RECEIPT_DELETED",
+        "EXPENSE_CORRECTED",
       ],
       budget_period: ["CYCLE", "MONTHLY", "CUSTOM"],
       category_behavior: [

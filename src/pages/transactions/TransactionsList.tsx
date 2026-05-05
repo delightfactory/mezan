@@ -8,7 +8,7 @@ import {
   Search,
   X,
 } from 'lucide-react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { useFamily } from '../../hooks/useFamily';
 import { createSupabaseClient } from '../../services/supabaseClient';
 import { createLedgerService, TransactionFilters } from '../../services/ledgerService';
@@ -154,6 +154,7 @@ function getPeriodBounds(preset: PeriodPreset): { dateFrom: string; dateTo: stri
 export const TransactionsList: React.FC = () => {
   // ── 1. Family context via useFamily (handles SUSPENDED/CONFLICT/INVITED) ──
   const { familyId, loading: familyLoading } = useFamily();
+  const navigate = useNavigate();
 
   const supabase = createSupabaseClient();
   const service  = createLedgerService(supabase);
@@ -594,7 +595,8 @@ export const TransactionsList: React.FC = () => {
                 return (
                   <div
                     key={txn.id}
-                    className={`rounded-2xl border bg-white p-4 shadow-sm transition-all ${
+                    onClick={() => navigate(`/transactions/${txn.id}`)}
+                    className={`rounded-2xl border bg-white p-4 shadow-sm transition-all cursor-pointer hover:border-primary-200 hover:shadow-md ${
                       isReversed ? 'opacity-50 border-gray-100' : 'border-gray-100'
                     }`}
                   >
@@ -659,7 +661,7 @@ export const TransactionsList: React.FC = () => {
 
                     {/* Reversal action */}
                     {showReversal && (
-                      <div className="mt-2 flex justify-end">
+                      <div className="mt-2 flex justify-end" onClick={(e) => e.stopPropagation()}>
                         <TransactionReversalButton
                           transactionId={txn.id}
                           transactionType={txn.type}
