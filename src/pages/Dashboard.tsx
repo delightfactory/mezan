@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowRightLeft, Calendar, MinusCircle, PlusCircle, Wallet as WalletIcon, ChevronDown, ChevronUp, Info, History } from 'lucide-react';
+import { ArrowRightLeft, BarChart2, Calendar, History, MinusCircle, PlusCircle, Wallet as WalletIcon, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { createDashboardService, DashboardSummary } from '../services/dashboardService';
 import { createSupabaseClient } from '../services/supabaseClient';
 import { LoadingState } from '../components/common/LoadingState';
 import { ErrorState } from '../components/common/ErrorState';
+import { TransactionReversalButton } from '../components/TransactionReversalButton';
 
 export const Dashboard: React.FC = () => {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
@@ -176,7 +177,7 @@ export const Dashboard: React.FC = () => {
       </section>
 
       {/* Quick Links Nav */}
-      <section className="grid grid-cols-4 gap-2">
+      <section className="grid grid-cols-5 gap-2">
         <Link to="/debts" className="flex flex-col items-center justify-center rounded-2xl bg-gray-50 py-3 text-gray-700 transition-colors hover:bg-gray-100 border border-gray-100">
           <span className="text-xl mb-1">🤝</span>
           <span className="text-[10px] font-bold">الديون</span>
@@ -192,6 +193,10 @@ export const Dashboard: React.FC = () => {
         <Link to="/commitments" className="flex flex-col items-center justify-center rounded-2xl bg-gray-50 py-3 text-gray-700 transition-colors hover:bg-gray-100 border border-gray-100">
           <span className="text-xl mb-1">📅</span>
           <span className="text-[10px] font-bold">الالتزامات</span>
+        </Link>
+        <Link to="/reports/monthly" className="flex flex-col items-center justify-center rounded-2xl bg-primary-50 py-3 text-primary-700 transition-colors hover:bg-primary-100 border border-primary-100">
+          <BarChart2 size={20} className="mb-1" />
+          <span className="text-[10px] font-bold">التقارير</span>
         </Link>
       </section>
 
@@ -225,6 +230,9 @@ export const Dashboard: React.FC = () => {
       <section>
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-900">آخر الحركات</h2>
+          <Link to="/transactions" className="text-xs font-bold text-primary-600 hover:text-primary-700 transition-colors">
+            عرض الكل
+          </Link>
         </div>
         <div className="space-y-3">
           {summary?.recentTransactions.map((transaction) => (
@@ -241,9 +249,17 @@ export const Dashboard: React.FC = () => {
                   {new Date(transaction.effective_at).toLocaleDateString('ar-EG', { month: 'long', day: 'numeric' })}
                 </div>
               </div>
-              <div className={`text-left font-bold ${getTransactionColor(transaction.type)}`}>
-                <span dir="ltr" className="text-sm">{getTransactionSign(transaction.type)}{transaction.amount.toLocaleString()}</span>
-                <span className="mr-1 text-[10px] font-normal text-gray-400">ج.م</span>
+              <div className="flex flex-col items-end">
+                <div className={`text-left font-bold ${getTransactionColor(transaction.type)}`}>
+                  <span dir="ltr" className="text-sm">{getTransactionSign(transaction.type)}{transaction.amount.toLocaleString()}</span>
+                  <span className="mr-1 text-[10px] font-normal text-gray-400">ج.م</span>
+                </div>
+                <TransactionReversalButton 
+                  transactionId={transaction.id}
+                  transactionType={transaction.type}
+                  familyId={transaction.family_id}
+                  onSuccess={fetchDashboard}
+                />
               </div>
             </div>
           ))}

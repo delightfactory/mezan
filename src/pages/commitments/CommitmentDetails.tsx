@@ -51,6 +51,7 @@ export const CommitmentDetails: React.FC = () => {
     switch(status) {
       case 'UPCOMING': return 'قادم';
       case 'PAID': return 'تم الدفع';
+      case 'PARTIALLY_PAID': return 'مدفوع جزئياً';
       case 'OVERDUE': return 'متأخر';
       case 'SKIPPED': return 'تم التجاوز';
       case 'CANCELLED': return 'ملغى';
@@ -62,6 +63,7 @@ export const CommitmentDetails: React.FC = () => {
     switch(status) {
       case 'UPCOMING': return 'text-blue-600 bg-blue-50';
       case 'PAID': return 'text-green-600 bg-green-50';
+      case 'PARTIALLY_PAID': return 'text-yellow-600 bg-yellow-50';
       case 'OVERDUE': return 'text-red-600 bg-red-50';
       case 'SKIPPED': return 'text-gray-500 bg-gray-50';
       case 'CANCELLED': return 'text-gray-400 bg-gray-50';
@@ -72,6 +74,7 @@ export const CommitmentDetails: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch(status) {
       case 'PAID': return <CheckCircle size={14} className="ml-1" />;
+      case 'PARTIALLY_PAID': return <Clock size={14} className="ml-1" />;
       case 'OVERDUE': return <AlertCircle size={14} className="ml-1" />;
       default: return <Clock size={14} className="ml-1" />;
     }
@@ -136,7 +139,7 @@ export const CommitmentDetails: React.FC = () => {
           </div>
         ) : (
           occurrences.map((occ) => {
-            const isPayable = occ.status === 'UPCOMING' || occ.status === 'OVERDUE';
+            const isPayable = occ.status === 'UPCOMING' || occ.status === 'OVERDUE' || occ.status === 'PARTIALLY_PAID';
             return (
               <div key={occ.id} className="p-4 border-b border-gray-50 last:border-0 flex justify-between items-center">
                 <div className="flex items-center space-x-3 space-x-reverse">
@@ -149,6 +152,11 @@ export const CommitmentDetails: React.FC = () => {
                         {getStatusIcon(occ.status)}
                         {getStatusLabel(occ.status)}
                       </span>
+                      {occ.status === 'PARTIALLY_PAID' && (
+                        <span className="text-xs text-gray-500 mr-2">
+                          باقي: {(Number(occ.amount) - Number(occ.paid_amount || 0)).toLocaleString()} ج.م
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

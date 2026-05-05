@@ -7,6 +7,8 @@ import { Wallet, GameyaCircle } from '../../types/models';
 import { useFamily } from '../../hooks/useFamily';
 import { getArabicErrorMessage } from '../../utils/errorHandler';
 import { ArrowRight, CheckCircle, AlertCircle, TrendingUp, DollarSign } from 'lucide-react';
+import { WalletSelect } from '../../components/WalletSelect';
+import { getDefaultWalletId } from '../../utils/walletHelpers';
 
 export const GameyaPayout: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -45,7 +47,7 @@ export const GameyaPayout: React.FC = () => {
         } else {
           setCircle(foundCircle);
           if (fetchedWallets.length > 0) {
-            setWalletId(fetchedWallets.find(w => w.type === 'REAL' && !w.is_archived)?.id || '');
+            setWalletId(getDefaultWalletId(fetchedWallets, 'REAL'));
           }
         }
       } catch (err) {
@@ -131,17 +133,14 @@ export const GameyaPayout: React.FC = () => {
                 <p className="text-sm font-medium text-red-700">لا توجد محافظ متاحة للاستلام. الرجاء إنشاء محفظة أولاً.</p>
               </div>
             ) : (
-              <select
+              <WalletSelect
+                wallets={wallets}
                 value={walletId}
-                onChange={(e) => setWalletId(e.target.value)}
+                onChange={setWalletId}
+                required
+                filter="REAL"
                 className="block w-full rounded-xl border-gray-300 py-3 pl-3 pr-10 text-base focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm"
-              >
-                {wallets.map((wallet) => (
-                  <option key={wallet.id} value={wallet.id}>
-                    {wallet.name} ({wallet.balance.toLocaleString()} ج.م)
-                  </option>
-                ))}
-              </select>
+              />
             )}
           </div>
 

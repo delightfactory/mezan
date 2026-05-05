@@ -184,6 +184,7 @@ export type Database = {
           due_date: string
           family_id: string
           id: string
+          paid_amount: number
           paid_at: string | null
           paid_transaction_id: string | null
           status: Database["public"]["Enums"]["occurrence_status"]
@@ -195,6 +196,7 @@ export type Database = {
           due_date: string
           family_id: string
           id?: string
+          paid_amount?: number
           paid_at?: string | null
           paid_transaction_id?: string | null
           status?: Database["public"]["Enums"]["occurrence_status"]
@@ -206,6 +208,7 @@ export type Database = {
           due_date?: string
           family_id?: string
           id?: string
+          paid_amount?: number
           paid_at?: string | null
           paid_transaction_id?: string | null
           status?: Database["public"]["Enums"]["occurrence_status"]
@@ -228,6 +231,65 @@ export type Database = {
           {
             foreignKeyName: "commitment_occurrences_paid_transaction_id_fkey"
             columns: ["paid_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "ledger_transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commitment_payments: {
+        Row: {
+          amount: number
+          created_by: string
+          family_id: string
+          id: string
+          occurrence_id: string
+          paid_at: string
+          transaction_id: string
+        }
+        Insert: {
+          amount: number
+          created_by: string
+          family_id: string
+          id?: string
+          occurrence_id: string
+          paid_at?: string
+          transaction_id: string
+        }
+        Update: {
+          amount?: number
+          created_by?: string
+          family_id?: string
+          id?: string
+          occurrence_id?: string
+          paid_at?: string
+          transaction_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commitment_payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_occurrence_id_fkey"
+            columns: ["occurrence_id"]
+            isOneToOne: false
+            referencedRelation: "commitment_occurrences"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_payments_transaction_id_fkey"
+            columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "ledger_transactions"
             referencedColumns: ["id"]
@@ -1484,6 +1546,7 @@ export type Database = {
       }
       fn_pay_commitment_occurrence: {
         Args: {
+          p_amount?: number
           p_effective_at?: string
           p_family_id: string
           p_notes?: string
@@ -1779,6 +1842,7 @@ export type Database = {
         | "OVERDUE"
         | "SKIPPED"
         | "CANCELLED"
+        | "PARTIALLY_PAID"
       payment_schedule_type: "ONE_TIME" | "MONTHLY_INSTALLMENT" | "FLEXIBLE"
       txn_status: "POSTED" | "REVERSED" | "PENDING"
       txn_type:
@@ -2004,6 +2068,7 @@ export const Constants = {
         "OVERDUE",
         "SKIPPED",
         "CANCELLED",
+        "PARTIALLY_PAID",
       ],
       payment_schedule_type: ["ONE_TIME", "MONTHLY_INSTALLMENT", "FLEXIBLE"],
       txn_status: ["POSTED", "REVERSED", "PENDING"],

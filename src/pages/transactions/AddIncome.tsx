@@ -8,6 +8,8 @@ import { createSupabaseClient } from '../../services/supabaseClient';
 import { createWalletService } from '../../services/walletService';
 import { Category, Wallet } from '../../types/models';
 import { getArabicErrorMessage } from '../../utils/errorHandler';
+import { WalletSelect } from '../../components/WalletSelect';
+import { getDefaultWalletId } from '../../utils/walletHelpers';
 
 export const AddIncome: React.FC = () => {
   const navigate = useNavigate();
@@ -46,7 +48,7 @@ export const AddIncome: React.FC = () => {
 
         setWallets(activeWallets);
         setCategories(incomeCategories);
-        setWalletId(activeWallets[0]?.id ?? '');
+        setWalletId(getDefaultWalletId(fetchedWallets, 'ALL'));
         setCategoryId(incomeCategories[0]?.id ?? '');
       } catch (err) {
         setError(getArabicErrorMessage(err));
@@ -133,10 +135,12 @@ export const AddIncome: React.FC = () => {
 
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700">إلى المحفظة</label>
-          <select value={walletId} onChange={(event) => setWalletId(event.target.value)} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition-all focus:border-green-500 focus:ring-2 focus:ring-green-100" required>
-            <option value="">اختر المحفظة...</option>
-            {wallets.map((wallet) => <option key={wallet.id} value={wallet.id}>{wallet.name}</option>)}
-          </select>
+          <WalletSelect
+            wallets={wallets}
+            value={walletId}
+            onChange={setWalletId}
+            required
+          />
         </div>
 
         <div>

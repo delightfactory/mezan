@@ -8,6 +8,8 @@ import { createSupabaseClient } from '../../services/supabaseClient';
 import { createWalletService } from '../../services/walletService';
 import { Category, Wallet } from '../../types/models';
 import { getArabicErrorMessage } from '../../utils/errorHandler';
+import { WalletSelect } from '../../components/WalletSelect';
+import { getDefaultWalletId } from '../../utils/walletHelpers';
 
 export const AddExpense: React.FC = () => {
   const navigate = useNavigate();
@@ -46,7 +48,7 @@ export const AddExpense: React.FC = () => {
 
         setWallets(activeWallets);
         setCategories(expenseCategories);
-        setWalletId(activeWallets[0]?.id ?? '');
+        setWalletId(getDefaultWalletId(fetchedWallets, 'ALL'));
         setCategoryId(expenseCategories[0]?.id ?? '');
       } catch (err) {
         setError(getArabicErrorMessage(err));
@@ -135,10 +137,13 @@ export const AddExpense: React.FC = () => {
 
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700">من المحفظة</label>
-          <select value={walletId} onChange={(event) => setWalletId(event.target.value)} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition-all focus:border-red-500 focus:ring-2 focus:ring-red-100" required>
-            <option value="">اختر المحفظة...</option>
-            {wallets.map((wallet) => <option key={wallet.id} value={wallet.id}>{wallet.name}</option>)}
-          </select>
+          <WalletSelect
+            wallets={wallets}
+            value={walletId}
+            onChange={setWalletId}
+            required
+            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition-all focus:border-red-500 focus:ring-2 focus:ring-red-100"
+          />
           {selectedWallet && (
             <p className="mt-2 pr-2 text-xs text-gray-500">
               الرصيد المتاح: <span className="font-bold text-gray-700">{selectedWallet.balance.toLocaleString()}</span> ج.م

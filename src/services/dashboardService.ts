@@ -115,7 +115,7 @@ export function createDashboardService(client: TypedSupabaseClient) {
           breakdown
         ] = await Promise.all([
           client.from('wallets').select('*').eq('family_id', familyId).order('sort_order'),
-          client.from('ledger_transactions').select('*').eq('family_id', familyId).order('effective_at', { ascending: false }).limit(5),
+          client.from('ledger_transactions').select('*').eq('family_id', familyId).order('effective_at', { ascending: false }).order('created_at', { ascending: false }).limit(7),
           client.from('commitments').select('*').eq('family_id', familyId).eq('is_active', true).order('start_date', { ascending: true }),
           client.from('debts').select('*').eq('family_id', familyId).eq('status', 'ACTIVE').order('created_at', { ascending: false }),
           client.from('gameya_circles').select('*').eq('family_id', familyId).neq('status', 'CANCELLED').order('start_date', { ascending: false }),

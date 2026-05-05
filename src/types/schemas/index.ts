@@ -188,6 +188,7 @@ export const payCommitmentOccurrenceSchema = z.object({
   p_family_id: uuidSchema,
   p_occurrence_id: uuidSchema,
   p_wallet_id: uuidSchema,
+  p_amount: positiveAmountSchema.optional(),
   p_effective_at: isoDateSchema,
   p_notes: z.string().optional(),
 });

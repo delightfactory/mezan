@@ -7,6 +7,8 @@ import { Wallet } from '../../types/models';
 import { useFamily } from '../../hooks/useFamily';
 import { getArabicErrorMessage } from '../../utils/errorHandler';
 import { ArrowRight, Settings2 } from 'lucide-react';
+import { WalletSelect } from '../../components/WalletSelect';
+import { getDefaultWalletId } from '../../utils/walletHelpers';
 
 export const ReceiveLoan: React.FC = () => {
   const navigate = useNavigate();
@@ -40,7 +42,8 @@ export const ReceiveLoan: React.FC = () => {
       if (!familyId) return;
       try {
         const fetchedWallets = await walletService.getWallets(familyId);
-        setWallets(fetchedWallets.filter(w => !w.is_archived));
+        setWallets(fetchedWallets);
+        setWalletId(getDefaultWalletId(fetchedWallets, 'REAL'));
       } catch (err) {
         setError(getArabicErrorMessage(err));
       } finally {
@@ -147,17 +150,14 @@ export const ReceiveLoan: React.FC = () => {
 
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">إيداع الفلوس في</label>
-          <select
+          <WalletSelect
+            wallets={wallets}
             value={walletId}
-            onChange={(e) => setWalletId(e.target.value)}
-            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-100 outline-none transition-all bg-white"
+            onChange={setWalletId}
             required
-          >
-            <option value="">اختر المحفظة...</option>
-            {wallets.map(w => (
-              <option key={w.id} value={w.id}>{w.name} ({w.balance.toLocaleString()} ج.م)</option>
-            ))}
-          </select>
+            filter="REAL"
+            className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-100 outline-none transition-all bg-white"
+          />
         </div>
 
         <div className="pt-2">

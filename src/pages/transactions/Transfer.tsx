@@ -7,6 +7,8 @@ import { createSupabaseClient } from '../../services/supabaseClient';
 import { createWalletService } from '../../services/walletService';
 import { Wallet } from '../../types/models';
 import { getArabicErrorMessage } from '../../utils/errorHandler';
+import { WalletSelect } from '../../components/WalletSelect';
+import { getDefaultWalletId } from '../../utils/walletHelpers';
 
 export const Transfer: React.FC = () => {
   const navigate = useNavigate();
@@ -36,8 +38,9 @@ export const Transfer: React.FC = () => {
         const fetchedWallets = await walletService.getWallets(familyId);
         const activeWallets = fetchedWallets.filter((wallet) => !wallet.is_archived);
         setWallets(activeWallets);
-        setFromWalletId(activeWallets[0]?.id ?? '');
-        setToWalletId(activeWallets[1]?.id ?? '');
+        const defaultFrom = getDefaultWalletId(fetchedWallets, 'ALL');
+        setFromWalletId(defaultFrom);
+        setToWalletId(activeWallets.find(w => w.id !== defaultFrom)?.id ?? '');
       } catch (err) {
         setError(getArabicErrorMessage(err));
       } finally {
@@ -129,10 +132,13 @@ export const Transfer: React.FC = () => {
 
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700">من المحفظة</label>
-          <select value={fromWalletId} onChange={(event) => setFromWalletId(event.target.value)} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-100" required>
-            <option value="">اختر المحفظة...</option>
-            {wallets.map((wallet) => <option key={wallet.id} value={wallet.id}>{wallet.name}</option>)}
-          </select>
+          <WalletSelect
+            wallets={wallets}
+            value={fromWalletId}
+            onChange={setFromWalletId}
+            required
+            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
           {selectedFromWallet && (
             <p className="mt-2 pr-2 text-xs text-gray-500">
               الرصيد المتاح: <span className="font-bold text-gray-700">{selectedFromWallet.balance.toLocaleString()}</span> ج.م
@@ -142,10 +148,13 @@ export const Transfer: React.FC = () => {
 
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700">إلى المحفظة</label>
-          <select value={toWalletId} onChange={(event) => setToWalletId(event.target.value)} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-100" required>
-            <option value="">اختر المحفظة...</option>
-            {wallets.map((wallet) => <option key={wallet.id} value={wallet.id}>{wallet.name}</option>)}
-          </select>
+          <WalletSelect
+            wallets={wallets}
+            value={toWalletId}
+            onChange={setToWalletId}
+            required
+            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 outline-none transition-all focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+          />
         </div>
 
         <div>
