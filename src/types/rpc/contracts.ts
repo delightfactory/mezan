@@ -200,6 +200,36 @@ export type ExitFlexibleGameyaCircleRow = Functions['fn_exit_flexible_gameya_cir
 export type ImportExistingGameyaInput = Functions['fn_import_existing_gameya_circle']['Args'];
 export type ImportExistingGameyaOutput = Functions['fn_import_existing_gameya_circle']['Returns'];
 
+/**
+ * fn_accept_family_invitation
+ */
+export type AcceptFamilyInvitationInput = Functions['fn_accept_family_invitation']['Args'];
+export type AcceptFamilyInvitationOutput = Functions['fn_accept_family_invitation']['Returns'];
+
+/**
+ * fn_revoke_family_invitation
+ */
+export type RevokeFamilyInvitationInput = Functions['fn_revoke_family_invitation']['Args'];
+export type RevokeFamilyInvitationOutput = Functions['fn_revoke_family_invitation']['Returns'];
+
+/**
+ * fn_change_family_member_role
+ */
+export type ChangeFamilyMemberRoleInput = Functions['fn_change_family_member_role']['Args'];
+export type ChangeFamilyMemberRoleOutput = Functions['fn_change_family_member_role']['Returns'];
+
+/**
+ * fn_suspend_family_member
+ */
+export type SuspendFamilyMemberInput = Functions['fn_suspend_family_member']['Args'];
+export type SuspendFamilyMemberOutput = Functions['fn_suspend_family_member']['Returns'];
+
+/**
+ * fn_reactivate_family_member
+ */
+export type ReactivateFamilyMemberInput = Functions['fn_reactivate_family_member']['Args'];
+export type ReactivateFamilyMemberOutput = Functions['fn_reactivate_family_member']['Returns'];
+
 export const RPC_CONTRACTS = {
   createInitialFamily: {
     name: 'fn_create_initial_family',
@@ -320,6 +350,31 @@ export const RPC_CONTRACTS = {
     name: 'fn_import_existing_gameya_circle',
     mutating: true,
     requiredRoles: ['OWNER', 'MEMBER'],
+  },
+  acceptFamilyInvitation: {
+    name: 'fn_accept_family_invitation',
+    mutating: true,
+    requiredRoles: ['AUTHENTICATED'],
+  },
+  revokeFamilyInvitation: {
+    name: 'fn_revoke_family_invitation',
+    mutating: true,
+    requiredRoles: ['OWNER'],
+  },
+  changeFamilyMemberRole: {
+    name: 'fn_change_family_member_role',
+    mutating: true,
+    requiredRoles: ['OWNER'],
+  },
+  suspendFamilyMember: {
+    name: 'fn_suspend_family_member',
+    mutating: true,
+    requiredRoles: ['OWNER'],
+  },
+  reactivateFamilyMember: {
+    name: 'fn_reactivate_family_member',
+    mutating: true,
+    requiredRoles: ['OWNER'],
   },
 } as const satisfies Record<string, RpcContractMeta>;
 

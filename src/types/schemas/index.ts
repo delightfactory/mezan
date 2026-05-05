@@ -255,6 +255,39 @@ export const recalculateWalletBalanceSchema = z.object({
   p_wallet_id: uuidSchema,
 });
 
+// --- Family Administration ---
+export const createFamilyInvitationSchema = z.object({
+  family_id: uuidSchema,
+  email: z.string().email(),
+  role: z.enum(['MEMBER', 'VIEWER']),
+  display_name: z.string().optional(),
+});
+
+export const acceptFamilyInvitationSchema = z.object({
+  p_invitation_id: uuidSchema,
+});
+
+export const revokeFamilyInvitationSchema = z.object({
+  p_family_id: uuidSchema,
+  p_invitation_id: uuidSchema,
+});
+
+export const changeFamilyMemberRoleSchema = z.object({
+  p_family_id: uuidSchema,
+  p_member_id: uuidSchema,
+  p_new_role: z.enum(['OWNER', 'MEMBER', 'VIEWER']),
+});
+
+export const suspendFamilyMemberSchema = z.object({
+  p_family_id: uuidSchema,
+  p_member_id: uuidSchema,
+});
+
+export const reactivateFamilyMemberSchema = z.object({
+  p_family_id: uuidSchema,
+  p_member_id: uuidSchema,
+});
+
 // --- Export Types inferred from schemas ---
 export type CreateInitialFamilyPayload = z.infer<typeof createInitialFamilySchema>;
 export type RecordIncomePayload = z.infer<typeof recordIncomeSchema>;
@@ -281,4 +314,11 @@ export type ChangeGameyaPayoutTurnPayload = z.infer<typeof changeGameyaPayoutTur
 export type UpdateGameyaFutureSchedulePayload = z.infer<typeof updateGameyaFutureScheduleSchema>;
 export type ExitFlexibleGameyaCirclePayload = z.infer<typeof exitFlexibleGameyaCircleSchema>;
 export type ImportExistingGameyaCirclePayload = z.infer<typeof importExistingGameyaCircleSchema>;
+
+export type CreateFamilyInvitationPayload = z.infer<typeof createFamilyInvitationSchema>;
+export type AcceptFamilyInvitationPayload = z.infer<typeof acceptFamilyInvitationSchema>;
+export type RevokeFamilyInvitationPayload = z.infer<typeof revokeFamilyInvitationSchema>;
+export type ChangeFamilyMemberRolePayload = z.infer<typeof changeFamilyMemberRoleSchema>;
+export type SuspendFamilyMemberPayload = z.infer<typeof suspendFamilyMemberSchema>;
+export type ReactivateFamilyMemberPayload = z.infer<typeof reactivateFamilyMemberSchema>;
 

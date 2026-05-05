@@ -51,3 +51,4 @@ export function createSupabaseClient(options?: SupabaseClientOptions): SupabaseC
 }
 
 export type TypedSupabaseClient = SupabaseClient<Database>;
+export const supabase = createSupabaseClient();

@@ -28,6 +28,11 @@ import { CommitmentsList } from './pages/commitments/CommitmentsList';
 import { CreateCommitment } from './pages/commitments/CreateCommitment';
 import { CommitmentDetails } from './pages/commitments/CommitmentDetails';
 import { PayCommitment } from './pages/commitments/PayCommitment';
+import { FamilySettings } from './pages/family/FamilySettings';
+import { AccountSecurity } from './pages/auth/AccountSecurity';
+import { ForgotPassword } from './pages/auth/ForgotPassword';
+import { ResetPassword } from './pages/auth/ResetPassword';
+import { AcceptInvitation } from './pages/auth/AcceptInvitation';
 
 import { SplashScreen } from './components/layout/SplashScreen';
 
@@ -52,6 +57,9 @@ export const App: React.FC = () => {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/accept-invitation" element={<AcceptInvitation />} />
 
           <Route path="/" element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
             <Route index element={<Navigate to="/dashboard" replace />} />
@@ -82,6 +90,9 @@ export const App: React.FC = () => {
             <Route path="commitments/new" element={<CreateCommitment />} />
             <Route path="commitments/:id" element={<CommitmentDetails />} />
             <Route path="commitments/:commitmentId/occurrences/:occurrenceId/pay" element={<PayCommitment />} />
+
+            <Route path="family/settings" element={<FamilySettings />} />
+            <Route path="account/security" element={<AccountSecurity />} />
           </Route>
         </Routes>
       </BrowserRouter>
