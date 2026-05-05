@@ -10,6 +10,7 @@ export function useFamily(requireFamily = true) {
   const navigate = useNavigate();
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [memberRole, setMemberRole] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchFamily() {
@@ -17,17 +18,34 @@ export function useFamily(requireFamily = true) {
         setLoading(false);
         return;
       }
-      const { data } = await supabase
-        .from('family_members')
-        .select('family_id')
-        .eq('user_id', user.id)
-        .single();
+
+      const { data, error } = await supabase.rpc('fn_get_my_membership_state');
       
-      if (data && data.family_id) {
-        setFamilyId(data.family_id);
+      const state = Array.isArray(data) ? data[0] : data;
+
+      if (error || !state) {
+        if (requireFamily) {
+          navigate('/onboarding', { replace: true });
+        }
+        setLoading(false);
+        return;
+      }
+
+      if (state.status === 'ACTIVE' && state.family_id) {
+        setFamilyId(state.family_id);
+        setMemberRole(state.role);
+      } else if (state.status === 'SUSPENDED' || state.status === 'CONFLICT') {
+        if (window.location.pathname !== '/account/suspended') {
+          navigate('/account/suspended', { replace: true });
+        }
+      } else if (state.status === 'INVITED') {
+        if (window.location.pathname !== '/accept-invitation') {
+          navigate('/accept-invitation', { replace: true });
+        }
       } else if (requireFamily) {
-        // If the user has no family and we require it, force onboarding
-        navigate('/onboarding', { replace: true });
+        if (window.location.pathname !== '/onboarding' && window.location.pathname !== '/account/suspended') {
+          navigate('/onboarding', { replace: true });
+        }
       }
       
       setLoading(false);
@@ -35,5 +53,5 @@ export function useFamily(requireFamily = true) {
     fetchFamily();
   }, [user, navigate, requireFamily]);
 
-  return { familyId, loading };
+  return { familyId, memberRole, loading };
 }

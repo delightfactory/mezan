@@ -125,6 +125,40 @@ export type ReceiveLoanOutput = Functions['fn_receive_loan']['Returns'];
 export type ReceiveLoanRow = Functions['fn_receive_loan']['Returns'][number];
 
 /**
+ * fn_update_debt_metadata
+ * Mutating: Yes
+ * Required Role: OWNER / MEMBER
+ */
+export type UpdateDebtMetadataInput = Functions['fn_update_debt_metadata']['Args'];
+export type UpdateDebtMetadataOutput = Functions['fn_update_debt_metadata']['Returns'];
+
+/**
+ * fn_reschedule_debt
+ * Mutating: Yes
+ * Required Role: OWNER
+ */
+export type RescheduleDebtInput = Functions['fn_reschedule_debt']['Args'];
+export type RescheduleDebtOutput = Functions['fn_reschedule_debt']['Returns'];
+
+/**
+ * fn_write_off_debt
+ * Mutating: Yes
+ * Required Role: OWNER
+ */
+export type WriteOffDebtInput = Functions['fn_write_off_debt']['Args'];
+export type WriteOffDebtOutput = Functions['fn_write_off_debt']['Returns'];
+
+/**
+ * fn_record_payroll_deducted_income
+ * Mutating: Yes
+ * Required Role: OWNER / MEMBER
+ * Note: Supabase returns an array for set-returning functions.
+ */
+export type RecordPayrollDeductedIncomeInput = Functions['fn_record_payroll_deducted_income']['Args'];
+export type RecordPayrollDeductedIncomeOutput = Functions['fn_record_payroll_deducted_income']['Returns'];
+export type RecordPayrollDeductedIncomeRow = Functions['fn_record_payroll_deducted_income']['Returns'][number];
+
+/**
  * fn_create_gameya_circle
  * Mutating: Yes
  * Required Role: OWNER / MEMBER
@@ -229,6 +263,24 @@ export type SuspendFamilyMemberOutput = Functions['fn_suspend_family_member']['R
  */
 export type ReactivateFamilyMemberInput = Functions['fn_reactivate_family_member']['Args'];
 export type ReactivateFamilyMemberOutput = Functions['fn_reactivate_family_member']['Returns'];
+
+/**
+ * fn_create_family_category
+ */
+export type CreateFamilyCategoryInput = Functions['fn_create_family_category']['Args'];
+export type CreateFamilyCategoryOutput = Functions['fn_create_family_category']['Returns'];
+
+/**
+ * fn_update_family_category
+ */
+export type UpdateFamilyCategoryInput = Functions['fn_update_family_category']['Args'];
+export type UpdateFamilyCategoryOutput = Functions['fn_update_family_category']['Returns'];
+
+/**
+ * fn_archive_family_category
+ */
+export type ArchiveFamilyCategoryInput = Functions['fn_archive_family_category']['Args'];
+export type ArchiveFamilyCategoryOutput = Functions['fn_archive_family_category']['Returns'];
 
 export const RPC_CONTRACTS = {
   createInitialFamily: {
@@ -373,6 +425,21 @@ export const RPC_CONTRACTS = {
   },
   reactivateFamilyMember: {
     name: 'fn_reactivate_family_member',
+    mutating: true,
+    requiredRoles: ['OWNER'],
+  },
+  createFamilyCategory: {
+    name: 'fn_create_family_category',
+    mutating: true,
+    requiredRoles: ['OWNER'],
+  },
+  updateFamilyCategory: {
+    name: 'fn_update_family_category',
+    mutating: true,
+    requiredRoles: ['OWNER'],
+  },
+  archiveFamilyCategory: {
+    name: 'fn_archive_family_category',
     mutating: true,
     requiredRoles: ['OWNER'],
   },

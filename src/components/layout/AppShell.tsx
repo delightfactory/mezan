@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, LogOut, PieChart, ShieldCheck, Users, Wallet } from 'lucide-react';
+import { Home, LogOut, PieChart, ShieldCheck, Users, Wallet, Tags } from 'lucide-react';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -36,6 +36,13 @@ export const AppShell: React.FC = () => {
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
         <Logo variant="full" size="lg" />
         <div className="flex items-center gap-2">
+          <Link
+            to="/categories"
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-50 text-indigo-600 transition-colors hover:bg-indigo-100"
+            title="التصنيفات"
+          >
+            <Tags size={20} />
+          </Link>
           <Link
             to="/family/settings"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600 transition-colors hover:bg-blue-100"

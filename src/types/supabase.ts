@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -317,6 +317,64 @@ export type Database = {
           },
         ]
       }
+      debt_events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          debt_id: string
+          event_type: Database["public"]["Enums"]["debt_event_type"]
+          family_id: string
+          id: string
+          new_state: Json | null
+          notes: string | null
+          old_state: Json | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          debt_id: string
+          event_type: Database["public"]["Enums"]["debt_event_type"]
+          family_id: string
+          id?: string
+          new_state?: Json | null
+          notes?: string | null
+          old_state?: Json | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          debt_id?: string
+          event_type?: Database["public"]["Enums"]["debt_event_type"]
+          family_id?: string
+          id?: string
+          new_state?: Json | null
+          notes?: string | null
+          old_state?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debt_events_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "family_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "debt_events_debt_id_fkey"
+            columns: ["debt_id"]
+            isOneToOne: false
+            referencedRelation: "debts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "debt_events_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       debt_payments: {
         Row: {
           amount: number
@@ -371,49 +429,88 @@ export type Database = {
       }
       debts: {
         Row: {
+          counterparty_notes: string | null
+          counterparty_phone: string | null
           created_at: string
           created_by: string | null
+          debt_kind: Database["public"]["Enums"]["debt_kind"]
           direction: Database["public"]["Enums"]["debt_direction"]
           due_date: string | null
           entity_name: string
           family_id: string
           id: string
+          installment_count: number | null
+          installments_paid: number
+          is_payroll_deducted: boolean
           monthly_installment: number | null
+          next_due_date: string | null
           notes: string | null
           original_amount: number
+          payment_schedule_type: Database["public"]["Enums"]["payment_schedule_type"]
+          priority_level: Database["public"]["Enums"]["debt_priority_level"]
           remaining_amount: number
+          source_reference_id: string | null
+          source_reference_type: string | null
+          start_date: string
           status: Database["public"]["Enums"]["debt_status"]
           updated_at: string
+          written_off_amount: number | null
         }
         Insert: {
+          counterparty_notes?: string | null
+          counterparty_phone?: string | null
           created_at?: string
           created_by?: string | null
+          debt_kind?: Database["public"]["Enums"]["debt_kind"]
           direction: Database["public"]["Enums"]["debt_direction"]
           due_date?: string | null
           entity_name: string
           family_id: string
           id?: string
+          installment_count?: number | null
+          installments_paid?: number
+          is_payroll_deducted?: boolean
           monthly_installment?: number | null
+          next_due_date?: string | null
           notes?: string | null
           original_amount: number
+          payment_schedule_type?: Database["public"]["Enums"]["payment_schedule_type"]
+          priority_level?: Database["public"]["Enums"]["debt_priority_level"]
           remaining_amount: number
+          source_reference_id?: string | null
+          source_reference_type?: string | null
+          start_date?: string
           status?: Database["public"]["Enums"]["debt_status"]
           updated_at?: string
+          written_off_amount?: number | null
         }
         Update: {
+          counterparty_notes?: string | null
+          counterparty_phone?: string | null
           created_at?: string
           created_by?: string | null
+          debt_kind?: Database["public"]["Enums"]["debt_kind"]
           direction?: Database["public"]["Enums"]["debt_direction"]
           due_date?: string | null
           entity_name?: string
           family_id?: string
           id?: string
+          installment_count?: number | null
+          installments_paid?: number
+          is_payroll_deducted?: boolean
           monthly_installment?: number | null
+          next_due_date?: string | null
           notes?: string | null
           original_amount?: number
+          payment_schedule_type?: Database["public"]["Enums"]["payment_schedule_type"]
+          priority_level?: Database["public"]["Enums"]["debt_priority_level"]
           remaining_amount?: number
+          source_reference_id?: string | null
+          source_reference_type?: string | null
+          start_date?: string
           status?: Database["public"]["Enums"]["debt_status"]
           updated_at?: string
+          written_off_amount?: number | null
         }
         Relationships: [
           {
@@ -1154,6 +1251,10 @@ export type Database = {
         }
         Returns: string
       }
+      _require_category_owner: {
+        Args: { p_family_id: string }
+        Returns: string
+      }
       _require_member: {
         Args: {
           p_family_id: string
@@ -1178,6 +1279,26 @@ export type Database = {
       }
       fn_accept_family_invitation: {
         Args: { p_invitation_id: string }
+        Returns: undefined
+      }
+      fn_add_existing_user_to_family: {
+        Args: {
+          p_display_name: string
+          p_family_id: string
+          p_role: Database["public"]["Enums"]["member_role"]
+          p_user_id: string
+        }
+        Returns: string
+      }
+      fn_archive_family_category: {
+        Args: { p_category_id: string; p_family_id: string }
+        Returns: undefined
+      }
+      fn_assert_can_direct_create_family_member: {
+        Args: {
+          p_family_id: string
+          p_role: Database["public"]["Enums"]["member_role"]
+        }
         Returns: undefined
       }
       fn_calculate_safe_to_spend: {
@@ -1240,6 +1361,19 @@ export type Database = {
         }
         Returns: string
       }
+      fn_create_family_category: {
+        Args: {
+          p_behavior?: Database["public"]["Enums"]["category_behavior"]
+          p_direction?: Database["public"]["Enums"]["category_direction"]
+          p_family_id: string
+          p_icon?: string
+          p_name_ar: string
+          p_name_en?: string
+          p_parent_id?: string
+          p_priority_level?: number
+        }
+        Returns: string
+      }
       fn_create_family_invitation: {
         Args: {
           p_display_name: string
@@ -1284,9 +1418,18 @@ export type Database = {
       fn_disburse_loan: {
         Args: {
           p_amount: number
+          p_counterparty_notes?: string
+          p_counterparty_phone?: string
+          p_debt_kind?: Database["public"]["Enums"]["debt_kind"]
           p_effective_at?: string
           p_entity_name: string
           p_family_id: string
+          p_installment_count?: number
+          p_monthly_installment?: number
+          p_next_due_date?: string
+          p_payment_schedule_type?: Database["public"]["Enums"]["payment_schedule_type"]
+          p_priority_level?: Database["public"]["Enums"]["debt_priority_level"]
+          p_start_date?: string
           p_wallet_id: string
         }
         Returns: {
@@ -1307,6 +1450,17 @@ export type Database = {
           net_amount: number
           refund_transaction_id: string
           settlement_transaction_id: string
+        }[]
+      }
+      fn_get_my_membership_state: {
+        Args: never
+        Returns: {
+          blocking_reason: string
+          family_id: string
+          family_name: string
+          member_id: string
+          role: Database["public"]["Enums"]["member_role"]
+          status: string
         }[]
       }
       fn_import_existing_gameya_circle: {
@@ -1372,9 +1526,18 @@ export type Database = {
       fn_receive_loan: {
         Args: {
           p_amount: number
+          p_counterparty_notes?: string
+          p_counterparty_phone?: string
+          p_debt_kind?: Database["public"]["Enums"]["debt_kind"]
           p_effective_at?: string
           p_entity_name: string
           p_family_id: string
+          p_installment_count?: number
+          p_monthly_installment?: number
+          p_next_due_date?: string
+          p_payment_schedule_type?: Database["public"]["Enums"]["payment_schedule_type"]
+          p_priority_level?: Database["public"]["Enums"]["debt_priority_level"]
+          p_start_date?: string
           p_wallet_id: string
         }
         Returns: {
@@ -1442,6 +1605,33 @@ export type Database = {
         }
         Returns: string
       }
+      fn_record_payroll_deducted_income: {
+        Args: {
+          p_category_id: string
+          p_debt_id: string
+          p_deducted_amount: number
+          p_description?: string
+          p_effective_at?: string
+          p_family_id: string
+          p_total_income: number
+          p_wallet_id: string
+        }
+        Returns: {
+          income_txn_id: string
+          payment_txn_id: string
+        }[]
+      }
+      fn_reschedule_debt: {
+        Args: {
+          p_debt_id: string
+          p_family_id: string
+          p_installment_count?: number
+          p_monthly_installment?: number
+          p_next_due_date?: string
+          p_payment_schedule_type: Database["public"]["Enums"]["payment_schedule_type"]
+        }
+        Returns: undefined
+      }
       fn_revoke_family_invitation: {
         Args: { p_family_id: string; p_invitation_id: string }
         Returns: undefined
@@ -1461,6 +1651,30 @@ export type Database = {
         }
         Returns: string
       }
+      fn_update_debt_metadata: {
+        Args: {
+          p_counterparty_notes?: string
+          p_counterparty_phone?: string
+          p_debt_id: string
+          p_family_id: string
+          p_notes?: string
+          p_priority_level?: Database["public"]["Enums"]["debt_priority_level"]
+        }
+        Returns: undefined
+      }
+      fn_update_family_category: {
+        Args: {
+          p_behavior?: Database["public"]["Enums"]["category_behavior"]
+          p_category_id: string
+          p_family_id: string
+          p_icon?: string
+          p_name_ar: string
+          p_name_en?: string
+          p_parent_id?: string
+          p_priority_level?: number
+        }
+        Returns: undefined
+      }
       fn_update_gameya_future_schedule: {
         Args: {
           p_family_id: string
@@ -1468,6 +1682,18 @@ export type Database = {
           p_new_installment_amount: number
           p_new_payment_frequency: Database["public"]["Enums"]["gameya_payment_frequency"]
         }
+        Returns: undefined
+      }
+      fn_validate_family_category_parent: {
+        Args: {
+          p_direction: Database["public"]["Enums"]["category_direction"]
+          p_family_id: string
+          p_parent_id: string
+        }
+        Returns: undefined
+      }
+      fn_write_off_debt: {
+        Args: { p_debt_id: string; p_family_id: string; p_notes?: string }
         Returns: undefined
       }
       get_my_family_ids: { Args: never; Returns: string[] }
@@ -1499,6 +1725,8 @@ export type Database = {
         | "DEBT_SETTLED"
         | "SETTINGS_CHANGED"
         | "BUDGET_CREATED"
+        | "DEBT_WRITTEN_OFF"
+        | "PAYROLL_DEDUCTION"
       budget_period: "CYCLE" | "MONTHLY" | "CUSTOM"
       category_behavior:
         | "FIXED_ESSENTIAL"
@@ -1513,6 +1741,21 @@ export type Database = {
         | "ANNUAL"
         | "ONE_TIME"
       debt_direction: "BORROWED_FROM" | "LENT_TO"
+      debt_event_type:
+        | "CREATED"
+        | "PAYMENT_RECORDED"
+        | "METADATA_UPDATED"
+        | "RESCHEDULED"
+        | "WRITTEN_OFF"
+      debt_kind:
+        | "PERSONAL"
+        | "WORK_ADVANCE"
+        | "INSTALLMENT"
+        | "CARD"
+        | "STORE_CREDIT"
+        | "GAMEYA"
+        | "OTHER"
+      debt_priority_level: "LOW" | "MEDIUM" | "HIGH" | "CRITICAL"
       debt_status: "ACTIVE" | "SETTLED" | "WRITTEN_OFF"
       family_invitation_status: "PENDING" | "ACCEPTED" | "EXPIRED" | "REVOKED"
       gameya_payment_frequency:
@@ -1536,6 +1779,7 @@ export type Database = {
         | "OVERDUE"
         | "SKIPPED"
         | "CANCELLED"
+      payment_schedule_type: "ONE_TIME" | "MONTHLY_INSTALLMENT" | "FLEXIBLE"
       txn_status: "POSTED" | "REVERSED" | "PENDING"
       txn_type:
         | "INCOME"
@@ -1699,6 +1943,8 @@ export const Constants = {
         "DEBT_SETTLED",
         "SETTINGS_CHANGED",
         "BUDGET_CREATED",
+        "DEBT_WRITTEN_OFF",
+        "PAYROLL_DEDUCTION",
       ],
       budget_period: ["CYCLE", "MONTHLY", "CUSTOM"],
       category_behavior: [
@@ -1716,6 +1962,23 @@ export const Constants = {
         "ONE_TIME",
       ],
       debt_direction: ["BORROWED_FROM", "LENT_TO"],
+      debt_event_type: [
+        "CREATED",
+        "PAYMENT_RECORDED",
+        "METADATA_UPDATED",
+        "RESCHEDULED",
+        "WRITTEN_OFF",
+      ],
+      debt_kind: [
+        "PERSONAL",
+        "WORK_ADVANCE",
+        "INSTALLMENT",
+        "CARD",
+        "STORE_CREDIT",
+        "GAMEYA",
+        "OTHER",
+      ],
+      debt_priority_level: ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
       debt_status: ["ACTIVE", "SETTLED", "WRITTEN_OFF"],
       family_invitation_status: ["PENDING", "ACCEPTED", "EXPIRED", "REVOKED"],
       gameya_payment_frequency: [
@@ -1742,6 +2005,7 @@ export const Constants = {
         "SKIPPED",
         "CANCELLED",
       ],
+      payment_schedule_type: ["ONE_TIME", "MONTHLY_INSTALLMENT", "FLEXIBLE"],
       txn_status: ["POSTED", "REVERSED", "PENDING"],
       txn_type: [
         "INCOME",
@@ -1763,4 +2027,3 @@ export const Constants = {
     },
   },
 } as const
-

@@ -3,12 +3,20 @@ import { callRpc, callRpcSingleRow } from './rpcClient';
 import { 
   DisburseLoanInput, DisburseLoanRow,
   ReceiveLoanInput, ReceiveLoanRow,
-  RecordDebtPaymentInput, RecordDebtPaymentOutput
+  RecordDebtPaymentInput, RecordDebtPaymentOutput,
+  UpdateDebtMetadataInput, UpdateDebtMetadataOutput,
+  RescheduleDebtInput, RescheduleDebtOutput,
+  WriteOffDebtInput, WriteOffDebtOutput,
+  RecordPayrollDeductedIncomeInput, RecordPayrollDeductedIncomeRow
 } from '../types/rpc/contracts';
 import { 
   disburseLoanSchema, 
   receiveLoanSchema, 
-  recordDebtPaymentSchema 
+  recordDebtPaymentSchema,
+  updateDebtMetadataSchema,
+  rescheduleDebtSchema,
+  writeOffDebtSchema,
+  recordPayrollDeductedIncomeSchema
 } from '../types/schemas';
 import { Debt, DebtPayment } from '../types/models';
 import { mapPostgresError } from './errors';
@@ -45,23 +53,55 @@ export function createDebtService(client: TypedSupabaseClient) {
       }
     },
 
-    async updateDebtMetadata(
-      id: string, 
-      metadata: { notes?: string | null; due_date?: string | null; entity_name?: string }
-    ): Promise<Debt> {
+    async getDebtEvents(debtId: string) {
       try {
         const { data, error } = await client
-          .from('debts')
-          .update(metadata)
-          .eq('id', id)
-          .select()
-          .single();
-
+          .from('debt_events')
+          .select('*, created_by_member:created_by(id, display_name)')
+          .eq('debt_id', debtId)
+          .order('created_at', { ascending: false });
+          
         if (error) throw error;
-        return data as Debt;
+        return data;
       } catch (err) {
         throw mapPostgresError(err);
       }
+    },
+
+    async updateDebtMetadata(input: UpdateDebtMetadataInput): Promise<UpdateDebtMetadataOutput> {
+      return callRpc<UpdateDebtMetadataInput, UpdateDebtMetadataOutput>(
+        client,
+        'fn_update_debt_metadata',
+        input,
+        updateDebtMetadataSchema
+      );
+    },
+
+    async rescheduleDebt(input: RescheduleDebtInput): Promise<RescheduleDebtOutput> {
+      return callRpc<RescheduleDebtInput, RescheduleDebtOutput>(
+        client,
+        'fn_reschedule_debt',
+        input,
+        rescheduleDebtSchema
+      );
+    },
+
+    async writeOffDebt(input: WriteOffDebtInput): Promise<WriteOffDebtOutput> {
+      return callRpc<WriteOffDebtInput, WriteOffDebtOutput>(
+        client,
+        'fn_write_off_debt',
+        input,
+        writeOffDebtSchema
+      );
+    },
+
+    async recordPayrollDeductedIncome(input: RecordPayrollDeductedIncomeInput): Promise<RecordPayrollDeductedIncomeRow> {
+      return callRpcSingleRow<RecordPayrollDeductedIncomeInput, RecordPayrollDeductedIncomeRow>(
+        client,
+        'fn_record_payroll_deducted_income',
+        input,
+        recordPayrollDeductedIncomeSchema
+      );
     },
 
     async disburseLoan(input: DisburseLoanInput): Promise<DisburseLoanRow> {

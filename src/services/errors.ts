@@ -44,6 +44,10 @@ export function mapPostgresError(error: any): RpcError {
   else if (errorString.includes('CATEGORY_NOT_FOUND')) code = 'CATEGORY_NOT_FOUND';
   else if (errorString.includes('OCCURRENCE_NOT_PAYABLE')) code = 'OCCURRENCE_NOT_PAYABLE';
   else if (errorString.includes('GAMEYA_INVALID_CONFIG')) code = 'GAMEYA_INVALID_CONFIG';
+  else if (errorString.includes('MEMBERSHIP_SUSPENDED')) code = 'MEMBERSHIP_SUSPENDED';
+  else if (errorString.includes('MEMBERSHIP_CONFLICT')) code = 'MEMBERSHIP_CONFLICT';
+  else if (errorString.includes('MEMBERSHIP_PENDING')) code = 'MEMBERSHIP_PENDING';
+  else if (errorString.includes('ONE_FAMILY_LIMIT')) code = 'ONE_FAMILY_LIMIT';
 
   return new RpcError(code, undefined, error);
 }

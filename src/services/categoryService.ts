@@ -1,19 +1,12 @@
 import { TypedSupabaseClient } from './supabaseClient';
-import { Category, CategoryBehavior, CategoryDirection } from '../types/models';
+import { Category } from '../types/models';
 import { mapPostgresError } from './errors';
 import { RpcError } from '../types/rpc/errors';
-
-export interface CreateFamilyCategoryInput {
-  family_id: string;
-  name_ar: string;
-  name_en?: string | null;
-  direction: CategoryDirection;
-  behavior?: CategoryBehavior;
-  parent_id?: string | null;
-  priority_level?: number;
-  icon?: string | null;
-  is_archived?: boolean;
-}
+import { 
+  CreateFamilyCategoryPayload, 
+  UpdateFamilyCategoryPayload, 
+  ArchiveFamilyCategoryPayload 
+} from '../types/schemas';
 
 export function createCategoryService(client: TypedSupabaseClient) {
   return {
@@ -33,44 +26,53 @@ export function createCategoryService(client: TypedSupabaseClient) {
       }
     },
 
-    async createFamilyCategory(input: CreateFamilyCategoryInput): Promise<Category> {
+    async createFamilyCategory(input: CreateFamilyCategoryPayload): Promise<string> {
       try {
-        if (!input.family_id) {
-          throw new RpcError('ACCESS_DENIED', 'Family ID is required to create a family category.');
-        }
-        const { data, error } = await client
-          .from('categories')
-          .insert({
-            ...input,
-            is_system: false // Force system to false
-          })
-          .select()
-          .single();
+        const { data, error } = await client.rpc('fn_create_family_category', {
+          p_family_id: input.p_family_id,
+          p_name_ar: input.p_name_ar,
+          p_name_en: input.p_name_en || undefined,
+          p_direction: input.p_direction,
+          p_behavior: input.p_behavior,
+          p_parent_id: input.p_parent_id || undefined,
+          p_priority_level: input.p_priority_level,
+          p_icon: input.p_icon || undefined,
+        });
 
         if (error) throw error;
-        return data as Category;
+        return data as string; // returns the new category UUID
       } catch (err) {
         throw mapPostgresError(err);
       }
     },
 
-    async updateFamilyCategoryMetadata(
-      id: string, 
-      metadata: { name_ar?: string; name_en?: string | null; icon?: string | null; is_archived?: boolean }
-    ): Promise<Category> {
+    async updateFamilyCategory(input: UpdateFamilyCategoryPayload): Promise<void> {
       try {
-        // RLS should naturally block updating system categories (family_id IS NULL).
-        // But we just safely update non-structural data.
-        const { data, error } = await client
-          .from('categories')
-          .update(metadata as any)
-          .eq('id', id)
-          .not('family_id', 'is', null) // Extra safety to never update system categories
-          .select()
-          .single();
+        const { error } = await client.rpc('fn_update_family_category', {
+          p_family_id: input.p_family_id,
+          p_category_id: input.p_category_id,
+          p_name_ar: input.p_name_ar,
+          p_name_en: input.p_name_en || undefined,
+          p_behavior: input.p_behavior,
+          p_parent_id: input.p_parent_id || undefined,
+          p_priority_level: input.p_priority_level,
+          p_icon: input.p_icon || undefined,
+        });
 
         if (error) throw error;
-        return data as Category;
+      } catch (err) {
+        throw mapPostgresError(err);
+      }
+    },
+
+    async archiveFamilyCategory(input: ArchiveFamilyCategoryPayload): Promise<void> {
+      try {
+        const { error } = await client.rpc('fn_archive_family_category', {
+          p_family_id: input.p_family_id,
+          p_category_id: input.p_category_id,
+        });
+
+        if (error) throw error;
       } catch (err) {
         throw mapPostgresError(err);
       }

@@ -13,6 +13,7 @@ import { Transfer } from './pages/transactions/Transfer';
 import { DebtsList } from './pages/debts/DebtsList';
 import { ReceiveLoan } from './pages/debts/ReceiveLoan';
 import { DisburseLoan } from './pages/debts/DisburseLoan';
+import { DebtDetails } from './pages/debts/DebtDetails';
 import { DebtPayment } from './pages/debts/DebtPayment';
 import { GameyaList } from './pages/gameya/GameyaList';
 import { GameyaDetails } from './pages/gameya/GameyaDetails';
@@ -33,8 +34,11 @@ import { AccountSecurity } from './pages/auth/AccountSecurity';
 import { ForgotPassword } from './pages/auth/ForgotPassword';
 import { ResetPassword } from './pages/auth/ResetPassword';
 import { AcceptInvitation } from './pages/auth/AcceptInvitation';
+import { AccountSuspended } from './pages/auth/AccountSuspended';
 
 import { SplashScreen } from './components/layout/SplashScreen';
+
+import { CategoriesManagement } from './pages/categories/CategoriesManagement';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, isLoading } = useAuth();
@@ -60,18 +64,21 @@ export const App: React.FC = () => {
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/accept-invitation" element={<AcceptInvitation />} />
+          <Route path="/account/suspended" element={<ProtectedRoute><AccountSuspended /></ProtectedRoute>} />
 
           <Route path="/" element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="onboarding" element={<Onboarding />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="wallets" element={<Wallets />} />
+            <Route path="categories" element={<CategoriesManagement />} />
             <Route path="transactions/income" element={<AddIncome />} />
             <Route path="transactions/expense" element={<AddExpense />} />
             <Route path="transactions/transfer" element={<Transfer />} />
             <Route path="debts" element={<DebtsList />} />
             <Route path="debts/receive-loan" element={<ReceiveLoan />} />
             <Route path="debts/disburse-loan" element={<DisburseLoan />} />
+            <Route path="debts/:id" element={<DebtDetails />} />
             <Route path="debts/:id/payment" element={<DebtPayment />} />
             
             <Route path="gameya" element={<GameyaList />} />

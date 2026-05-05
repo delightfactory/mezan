@@ -40,6 +40,10 @@ export type RpcErrorCode =
   | 'GAMEYA_SCHEDULE_LOCKED'
   | 'GAMEYA_INVALID_PAYOUT_TURN'
   | 'GAMEYA_NOT_ACTIVE'
+  | 'MEMBERSHIP_SUSPENDED'
+  | 'MEMBERSHIP_CONFLICT'
+  | 'MEMBERSHIP_PENDING'
+  | 'ONE_FAMILY_LIMIT'
   | 'UNKNOWN_ERROR';
 
 /**
@@ -84,6 +88,10 @@ export const RpcErrorMessages: Record<RpcErrorCode, string> = {
   GAMEYA_SCHEDULE_LOCKED: 'Schedule cannot be modified at this stage.',
   GAMEYA_INVALID_PAYOUT_TURN: 'Invalid payout turn specified.',
   GAMEYA_NOT_ACTIVE: 'Gam\'eya circle is not active.',
+  MEMBERSHIP_SUSPENDED: 'Your family membership has been suspended.',
+  MEMBERSHIP_CONFLICT: 'Your account has conflicting membership states.',
+  MEMBERSHIP_PENDING: 'You have a pending family invitation.',
+  ONE_FAMILY_LIMIT: 'User already has an active family membership.',
   UNKNOWN_ERROR: 'An unknown error occurred.',
 };
 

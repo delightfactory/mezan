@@ -66,12 +66,25 @@ export const correctTransactionSchema = z.object({
 });
 
 // --- Debt & Loans ---
+const debtKindSchema = z.enum(['PERSONAL', 'WORK_ADVANCE', 'INSTALLMENT', 'CARD', 'STORE_CREDIT', 'GAMEYA', 'OTHER']).optional();
+const paymentScheduleTypeSchema = z.enum(['ONE_TIME', 'MONTHLY_INSTALLMENT', 'FLEXIBLE']).optional();
+const debtPriorityLevelSchema = z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional();
+
 export const disburseLoanSchema = z.object({
   p_family_id: uuidSchema,
   p_wallet_id: uuidSchema,
   p_entity_name: z.string().min(1, 'Entity name is required'),
   p_amount: positiveAmountSchema,
   p_effective_at: isoDateSchema,
+  p_debt_kind: debtKindSchema,
+  p_payment_schedule_type: paymentScheduleTypeSchema,
+  p_start_date: dateOnlySchema.optional(),
+  p_next_due_date: dateOnlySchema.optional(),
+  p_monthly_installment: positiveAmountSchema.optional(),
+  p_installment_count: z.number().int().min(1).optional(),
+  p_priority_level: debtPriorityLevelSchema,
+  p_counterparty_phone: z.string().optional(),
+  p_counterparty_notes: z.string().optional(),
 });
 
 export const receiveLoanSchema = z.object({
@@ -79,6 +92,50 @@ export const receiveLoanSchema = z.object({
   p_wallet_id: uuidSchema,
   p_entity_name: z.string().min(1, 'Entity name is required'),
   p_amount: positiveAmountSchema,
+  p_effective_at: isoDateSchema,
+  p_debt_kind: debtKindSchema,
+  p_payment_schedule_type: paymentScheduleTypeSchema,
+  p_start_date: dateOnlySchema.optional(),
+  p_next_due_date: dateOnlySchema.optional(),
+  p_monthly_installment: positiveAmountSchema.optional(),
+  p_installment_count: z.number().int().min(1).optional(),
+  p_priority_level: debtPriorityLevelSchema,
+  p_counterparty_phone: z.string().optional(),
+  p_counterparty_notes: z.string().optional(),
+});
+
+export const updateDebtMetadataSchema = z.object({
+  p_family_id: uuidSchema,
+  p_debt_id: uuidSchema,
+  p_notes: z.string().optional(),
+  p_counterparty_phone: z.string().optional(),
+  p_counterparty_notes: z.string().optional(),
+  p_priority_level: debtPriorityLevelSchema.optional(),
+});
+
+export const rescheduleDebtSchema = z.object({
+  p_family_id: uuidSchema,
+  p_debt_id: uuidSchema,
+  p_payment_schedule_type: z.enum(['ONE_TIME', 'MONTHLY_INSTALLMENT', 'FLEXIBLE']),
+  p_next_due_date: dateOnlySchema.optional(),
+  p_monthly_installment: positiveAmountSchema.optional(),
+  p_installment_count: z.number().int().min(1).optional(),
+});
+
+export const writeOffDebtSchema = z.object({
+  p_family_id: uuidSchema,
+  p_debt_id: uuidSchema,
+  p_notes: z.string().optional(),
+});
+
+export const recordPayrollDeductedIncomeSchema = z.object({
+  p_family_id: uuidSchema,
+  p_total_income: positiveAmountSchema,
+  p_deducted_amount: positiveAmountSchema,
+  p_wallet_id: uuidSchema,
+  p_debt_id: uuidSchema,
+  p_category_id: uuidSchema,
+  p_description: z.string().optional(),
   p_effective_at: isoDateSchema,
 });
 
@@ -322,3 +379,34 @@ export type ChangeFamilyMemberRolePayload = z.infer<typeof changeFamilyMemberRol
 export type SuspendFamilyMemberPayload = z.infer<typeof suspendFamilyMemberSchema>;
 export type ReactivateFamilyMemberPayload = z.infer<typeof reactivateFamilyMemberSchema>;
 
+// --- Category Governance ---
+export const createFamilyCategorySchema = z.object({
+  p_family_id: uuidSchema,
+  p_name_ar: z.string().min(1, 'Name (AR) is required'),
+  p_name_en: z.string().optional().nullable(),
+  p_direction: z.enum(['INCOME', 'EXPENSE', 'TRANSFER']),
+  p_behavior: z.enum(['FIXED_ESSENTIAL', 'VARIABLE_BUDGETED', 'LUXURY', 'SYSTEM']),
+  p_parent_id: uuidSchema.optional().nullable(),
+  p_priority_level: z.number().int().min(1).max(100),
+  p_icon: z.string().optional().nullable(),
+});
+
+export const updateFamilyCategorySchema = z.object({
+  p_family_id: uuidSchema,
+  p_category_id: uuidSchema,
+  p_name_ar: z.string().min(1, 'Name (AR) is required'),
+  p_name_en: z.string().optional().nullable(),
+  p_behavior: z.enum(['FIXED_ESSENTIAL', 'VARIABLE_BUDGETED', 'LUXURY', 'SYSTEM']),
+  p_parent_id: uuidSchema.optional().nullable(),
+  p_priority_level: z.number().int().min(1).max(100),
+  p_icon: z.string().optional().nullable(),
+});
+
+export const archiveFamilyCategorySchema = z.object({
+  p_family_id: uuidSchema,
+  p_category_id: uuidSchema,
+});
+
+export type CreateFamilyCategoryPayload = z.infer<typeof createFamilyCategorySchema>;
+export type UpdateFamilyCategoryPayload = z.infer<typeof updateFamilyCategorySchema>;
+export type ArchiveFamilyCategoryPayload = z.infer<typeof archiveFamilyCategorySchema>;

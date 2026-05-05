@@ -3,10 +3,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { createSupabaseClient } from '../../services/supabaseClient';
 import { createDebtService } from '../../services/debtService';
 import { createWalletService } from '../../services/walletService';
-import { Wallet, Debt } from '../../types/models';
+import { createCategoryService } from '../../services/categoryService';
+import { Wallet, Debt, Category } from '../../types/models';
 import { useFamily } from '../../hooks/useFamily';
 import { getArabicErrorMessage } from '../../utils/errorHandler';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Briefcase } from 'lucide-react';
 
 export const DebtPayment: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -14,6 +15,7 @@ export const DebtPayment: React.FC = () => {
   const { familyId, loading: familyLoading } = useFamily();
   
   const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [incomeCategories, setIncomeCategories] = useState<Category[]>([]);
   const [debt, setDebt] = useState<Debt | null>(null);
   const [loading, setLoading] = useState(true);
   
@@ -22,26 +24,34 @@ export const DebtPayment: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // Payroll Deduction State
+  const [isPayrollDeduction, setIsPayrollDeduction] = useState(false);
+  const [totalIncome, setTotalIncome] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+
   const supabase = createSupabaseClient();
   const debtService = createDebtService(supabase);
   const walletService = createWalletService(supabase);
+  const categoryService = createCategoryService(supabase);
 
   useEffect(() => {
     async function fetchData() {
       if (!familyId || !id) return;
       try {
-        const [fetchedWallets, fetchedDebts] = await Promise.all([
+        const [fetchedWallets, fetchedDebts, fetchedCategories] = await Promise.all([
           walletService.getWallets(familyId),
-          debtService.getDebts(familyId)
+          debtService.getDebts(familyId),
+          categoryService.getCategories(familyId)
         ]);
         
         setWallets(fetchedWallets.filter(w => !w.is_archived));
+        setIncomeCategories(fetchedCategories.filter(c => c.direction === 'INCOME' && !c.is_archived));
+
         const foundDebt = fetchedDebts.find(d => d.id === id);
         if (!foundDebt) {
           setError('لم يتم العثور على الدين.');
         } else {
           setDebt(foundDebt);
-          // Set default amount to remaining amount
           setAmount(foundDebt.remaining_amount.toString());
         }
       } catch (err) {
@@ -66,16 +76,43 @@ export const DebtPayment: React.FC = () => {
       return;
     }
 
+    if (isPayrollDeduction) {
+      if (!totalIncome || Number(totalIncome) <= 0) {
+        setError('أدخل إجمالي الدخل بشكل صحيح.');
+        return;
+      }
+      if (!categoryId) {
+        setError('يرجى اختيار تصنيف الدخل (الراتب).');
+        return;
+      }
+      if (Number(amount) > Number(totalIncome)) {
+        setError('لا يمكن أن يكون القسط المخصوم أكبر من إجمالي الدخل.');
+        return;
+      }
+    }
+
     setSubmitting(true);
     setError(null);
 
     try {
-      await debtService.recordDebtPayment({
-        p_family_id: familyId!,
-        p_debt_id: debt.id,
-        p_wallet_id: walletId,
-        p_amount: Number(amount)
-      });
+      if (isPayrollDeduction) {
+        await debtService.recordPayrollDeductedIncome({
+          p_family_id: familyId!,
+          p_debt_id: debt.id,
+          p_wallet_id: walletId,
+          p_total_income: Number(totalIncome),
+          p_deducted_amount: Number(amount),
+          p_category_id: categoryId,
+          p_effective_at: new Date().toISOString()
+        });
+      } else {
+        await debtService.recordDebtPayment({
+          p_family_id: familyId!,
+          p_debt_id: debt.id,
+          p_wallet_id: walletId,
+          p_amount: Number(amount)
+        });
+      }
       navigate('/debts', { replace: true });
     } catch (err) {
       setError(getArabicErrorMessage(err));
@@ -89,23 +126,23 @@ export const DebtPayment: React.FC = () => {
   if (familyLoading || loading) {
     return (
       <div className="flex justify-center items-center h-full">
-        <div className="w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-rose-200 border-t-rose-600 rounded-full animate-spin"></div>
       </div>
     );
   }
 
   if (!debt) {
     return (
-      <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm">
+      <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm font-bold border border-red-100">
         {error || 'لم يتم العثور على الدين.'}
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       <div className="flex items-center space-x-3 space-x-reverse mb-6">
-        <button onClick={() => navigate(-1)} className="p-2 bg-white rounded-full shadow-sm text-gray-500 hover:text-gray-900">
+        <button onClick={() => navigate(-1)} className="p-2 bg-white rounded-full shadow-sm text-gray-500 hover:text-gray-900 transition-all active:scale-95">
           <ArrowRight size={24} />
         </button>
         <h2 className="text-xl font-bold text-gray-900">
@@ -114,65 +151,121 @@ export const DebtPayment: React.FC = () => {
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm">
+        <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm font-bold border border-red-100">
           {error}
         </div>
       )}
 
-      <div className="bg-primary-50 p-4 rounded-xl border border-primary-100 flex justify-between items-center">
+      <div className="bg-gray-900 p-5 rounded-2xl shadow-sm text-white flex justify-between items-center">
         <div>
-          <p className="text-sm text-primary-700 font-medium">{debt.entity_name}</p>
-          <p className="text-xs text-primary-600 mt-1">المتبقي: {debt.remaining_amount.toLocaleString()} ج.م</p>
+          <p className="text-sm text-gray-400 font-bold mb-1">{debt.entity_name}</p>
+          <p className="text-lg font-bold">المتبقي: {debt.remaining_amount.toLocaleString()} ج.م</p>
         </div>
-        <div className={`px-3 py-1 rounded-full text-xs font-bold ${isOwedByUs ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
-          {isOwedByUs ? 'ديون علينا' : 'فلوس لنا'}
+        <div className={`px-4 py-1.5 rounded-full text-xs font-bold ${isOwedByUs ? 'bg-rose-500/20 text-rose-200 border border-rose-500/30' : 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/30'}`}>
+          {isOwedByUs ? 'ديون علينا' : 'مستحقات لنا'}
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">المبلغ (ج.م)</label>
-          <input
-            type="number"
-            inputMode="decimal"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className={`w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 outline-none transition-all text-left font-bold text-xl ${isOwedByUs ? 'focus:border-red-500 focus:ring-red-100 text-red-600' : 'focus:border-green-500 focus:ring-green-100 text-green-600'}`}
-            dir="ltr"
-            placeholder="0.00"
-            required
-            max={debt.remaining_amount}
-          />
-        </div>
+        {isOwedByUs && debt.debt_kind === 'WORK_ADVANCE' && (
+          <div className="flex items-center space-x-3 space-x-reverse p-4 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => setIsPayrollDeduction(!isPayrollDeduction)}>
+            <div className="flex items-center justify-center w-10 h-10 bg-slate-200 rounded-lg text-slate-700">
+              <Briefcase size={20} />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-slate-900">خصم من الراتب مباشر</p>
+              <p className="text-[10px] font-bold text-slate-500">تسجيل الراتب وخصم السلفة في خطوة واحدة</p>
+            </div>
+            <div className={`w-6 h-6 rounded-md flex items-center justify-center border-2 transition-colors ${isPayrollDeduction ? 'bg-slate-900 border-slate-900' : 'border-slate-300'}`}>
+              {isPayrollDeduction && <div className="w-2.5 h-2.5 bg-white rounded-sm" />}
+            </div>
+          </div>
+        )}
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {isOwedByUs ? 'سحب الفلوس من محفظة' : 'إضافة الفلوس إلى محفظة'}
-          </label>
-          <select
-            value={walletId}
-            onChange={(e) => setWalletId(e.target.value)}
-            className={`w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 outline-none transition-all bg-white ${isOwedByUs ? 'focus:border-red-500 focus:ring-red-100' : 'focus:border-green-500 focus:ring-green-100'}`}
-            required
-          >
-            <option value="">اختر المحفظة...</option>
-            {wallets.map(w => (
-              <option key={w.id} value={w.id}>{w.name}</option>
-            ))}
-          </select>
-          {isOwedByUs && selectedWallet && (
-            <p className="mt-2 text-xs text-gray-500 pr-2">
-              الرصيد المتاح: <span className="font-bold text-gray-700">{selectedWallet.balance.toLocaleString()}</span> ج.م
-            </p>
+        <div className={isPayrollDeduction ? "p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-4" : ""}>
+          {isPayrollDeduction && (
+            <>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">الراتب الإجمالي (ج.م)</label>
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  value={totalIncome}
+                  onChange={(e) => setTotalIncome(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-slate-500 focus:ring-2 focus:ring-slate-100 outline-none transition-all text-left font-bold text-lg text-slate-900"
+                  dir="ltr"
+                  placeholder="0.00"
+                  required={isPayrollDeduction}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">تصنيف الدخل</label>
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-slate-500 focus:ring-2 focus:ring-slate-100 outline-none transition-all bg-white"
+                  required={isPayrollDeduction}
+                >
+                  <option value="">اختر التصنيف...</option>
+                  {incomeCategories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name_ar}</option>
+                  ))}
+                </select>
+              </div>
+            </>
           )}
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+              {isPayrollDeduction ? 'قيمة الخصم للسلفة (ج.م)' : 'المبلغ المدفوع (ج.م)'}
+            </label>
+            <input
+              type="number"
+              inputMode="decimal"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className={`w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 outline-none transition-all text-left font-bold text-xl ${isOwedByUs ? 'focus:border-rose-500 focus:ring-rose-100 text-rose-600' : 'focus:border-emerald-500 focus:ring-emerald-100 text-emerald-600'}`}
+              dir="ltr"
+              placeholder="0.00"
+              required
+              max={debt.remaining_amount}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+              {isPayrollDeduction ? 'إيداع الراتب المتبقي في' : isOwedByUs ? 'سحب الفلوس من محفظة' : 'إضافة الفلوس إلى محفظة'}
+            </label>
+            <select
+              value={walletId}
+              onChange={(e) => setWalletId(e.target.value)}
+              className={`w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 outline-none transition-all bg-white ${isOwedByUs && !isPayrollDeduction ? 'focus:border-rose-500 focus:ring-rose-100' : 'focus:border-emerald-500 focus:ring-emerald-100'}`}
+              required
+            >
+              <option value="">اختر المحفظة...</option>
+              {wallets.map(w => (
+                <option key={w.id} value={w.id}>{w.name}</option>
+              ))}
+            </select>
+            {isOwedByUs && !isPayrollDeduction && selectedWallet && (
+              <p className="mt-2 text-xs text-gray-500 pr-2">
+                الرصيد المتاح: <span className="font-bold text-gray-700">{selectedWallet.balance.toLocaleString()}</span> ج.م
+              </p>
+            )}
+            {isPayrollDeduction && totalIncome && amount && (
+               <p className="mt-2 text-xs text-emerald-600 font-bold pr-2 bg-emerald-50 p-2 rounded-lg border border-emerald-100">
+               سيتم إيداع صافي الراتب: {(Number(totalIncome) - Number(amount)).toLocaleString()} ج.م
+             </p>
+            )}
+          </div>
         </div>
 
         <button
           type="submit"
-          disabled={submitting || Number(amount) > debt.remaining_amount}
-          className={`w-full text-white font-bold py-4 rounded-xl transition-colors disabled:opacity-70 mt-4 ${isOwedByUs ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
+          disabled={submitting || Number(amount) > debt.remaining_amount || (isPayrollDeduction && Number(amount) > Number(totalIncome))}
+          className={`w-full text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95 disabled:opacity-70 mt-4 ${isPayrollDeduction ? 'bg-slate-900 hover:bg-black shadow-slate-200' : isOwedByUs ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-200' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200'}`}
         >
-          {submitting ? 'جاري الحفظ...' : (isOwedByUs ? 'تأكيد السداد' : 'تأكيد التحصيل')}
+          {submitting ? 'جاري الحفظ...' : (isPayrollDeduction ? 'تأكيد تسجيل الراتب والخصم' : isOwedByUs ? 'تأكيد السداد' : 'تأكيد التحصيل')}
         </button>
       </form>
     </div>

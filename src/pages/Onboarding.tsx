@@ -32,6 +32,15 @@ export const Onboarding: React.FC = () => {
           navigate('/dashboard', { replace: true });
           return;
         }
+        if (err.code === 'MEMBERSHIP_SUSPENDED') {
+          navigate('/account/suspended', { replace: true });
+          return;
+        }
+        if (err.code === 'MEMBERSHIP_CONFLICT') {
+          setError('حسابك يواجه تعارضاً في العضويات. يرجى مراجعة الدعم الفني.');
+          setLoading(false);
+          return;
+        }
         setError(err.message);
       } else {
         setError('حدث خطأ غير متوقع. يرجى المحاولة لاحقاً.');
