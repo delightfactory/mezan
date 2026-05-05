@@ -6,7 +6,7 @@ import { createCategoryService } from '../../services/categoryService';
 import { Budget, Category } from '../../types/models';
 import { useFamily } from '../../hooks/useFamily';
 import { getArabicErrorMessage } from '../../utils/errorHandler';
-import { PieChart, Save, Plus } from 'lucide-react';
+import { PieChart, Save, Plus, RefreshCw } from 'lucide-react';
 
 export const BudgetsList: React.FC = () => {
   const { familyId, loading: familyLoading } = useFamily();
@@ -19,6 +19,7 @@ export const BudgetsList: React.FC = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editAmount, setEditAmount] = useState<string>('');
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [recalculatingId, setRecalculatingId] = useState<string | null>(null);
 
   const supabase = createSupabaseClient();
   const budgetService = createBudgetService(supabase);
@@ -68,6 +69,19 @@ export const BudgetsList: React.FC = () => {
       setError(getArabicErrorMessage(err));
     } finally {
       setSavingId(null);
+    }
+  };
+
+  const handleRecalculate = async (id: string) => {
+    setRecalculatingId(id);
+    setError(null);
+    try {
+      const newSpent = await budgetService.recalculateBudgetSpent(id);
+      setBudgets(prev => prev.map(b => b.id === id ? { ...b, spent_amount: newSpent } : b));
+    } catch (err) {
+      setError(getArabicErrorMessage(err));
+    } finally {
+      setRecalculatingId(null);
     }
   };
 
@@ -177,9 +191,20 @@ export const BudgetsList: React.FC = () => {
                       <button onClick={() => setEditingId(null)} className="p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg text-xs font-bold">إلغاء</button>
                     </div>
                   ) : (
-                    <button onClick={() => handleEdit(budget)} className="text-xs font-bold text-purple-600 hover:text-purple-700">
-                      تعديل المخصص
-                    </button>
+                    <div className="flex items-center space-x-4 space-x-reverse">
+                      <button 
+                        onClick={() => handleRecalculate(budget.id)} 
+                        disabled={recalculatingId === budget.id}
+                        className="flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-gray-700 transition-colors disabled:opacity-50"
+                        title="إعادة حساب المصروف من سجل المعاملات"
+                      >
+                        <RefreshCw size={12} className={recalculatingId === budget.id ? 'animate-spin' : ''} />
+                        تحديث المصروف
+                      </button>
+                      <button onClick={() => handleEdit(budget)} className="text-xs font-bold text-purple-600 hover:text-purple-700 transition-colors">
+                        تعديل المخصص
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>

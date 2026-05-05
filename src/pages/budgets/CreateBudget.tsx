@@ -141,6 +141,17 @@ export const CreateBudget: React.FC = () => {
           />
         </div>
 
+        {formData.p_category_id && formData.p_cycle_start && formData.p_cycle_end && (
+          <div className="rounded-xl bg-blue-50 p-4 text-sm text-blue-700 flex items-start gap-2">
+            <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p>
+              <strong>ملاحظة:</strong> سيتم تلقائياً احتساب أي مصروفات مسجلة سابقاً في هذا التصنيف خلال الفترة المحددة ضمن مصروفات هذه الميزانية.
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <label className="text-sm font-bold text-gray-700 mr-1">تاريخ البداية</label>

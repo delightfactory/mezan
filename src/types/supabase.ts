@@ -1559,6 +1559,10 @@ export type Database = {
         Args: { p_family_id: string; p_member_id: string }
         Returns: undefined
       }
+      fn_recalculate_budget_spent: {
+        Args: { p_budget_id: string }
+        Returns: number
+      }
       fn_recalculate_wallet_balance: {
         Args: { p_wallet_id: string }
         Returns: number

@@ -50,6 +50,18 @@ export function createBudgetService(client: TypedSupabaseClient) {
       );
     },
 
+    async recalculateBudgetSpent(budgetId: string): Promise<number> {
+      try {
+        const { data, error } = await client.rpc('fn_recalculate_budget_spent', {
+          p_budget_id: budgetId
+        });
+        if (error) throw error;
+        return Number(data);
+      } catch (err) {
+        throw mapPostgresError(err);
+      }
+    },
+
     /** @deprecated Use commitmentService.getCommitments instead */
     async getCommitments(familyId: string): Promise<Commitment[]> {
       try {
