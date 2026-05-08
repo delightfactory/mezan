@@ -18,7 +18,7 @@ import {
   writeOffDebtSchema,
   recordPayrollDeductedIncomeSchema
 } from '../types/schemas';
-import { Debt, DebtPayment } from '../types/models';
+import { Debt, DebtPayment, DebtDueOccurrence } from '../types/models';
 import { mapPostgresError } from './errors';
 
 export function createDebtService(client: TypedSupabaseClient) {
@@ -48,6 +48,22 @@ export function createDebtService(client: TypedSupabaseClient) {
           
         if (error) throw error;
         return data as DebtPayment[];
+      } catch (err) {
+        throw mapPostgresError(err);
+      }
+    },
+
+    /** Fetch per-installment occurrences for a BORROWED_FROM debt (ordered by sequence) */
+    async getDebtDueOccurrences(debtId: string): Promise<DebtDueOccurrence[]> {
+      try {
+        const { data, error } = await client
+          .from('debt_due_occurrences')
+          .select('*')
+          .eq('debt_id', debtId)
+          .order('sequence_no', { ascending: true });
+
+        if (error) throw error;
+        return data as DebtDueOccurrence[];
       } catch (err) {
         throw mapPostgresError(err);
       }

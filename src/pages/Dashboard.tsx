@@ -126,14 +126,28 @@ export const Dashboard: React.FC = () => {
                 <span>إجمالي الكاش والبنك</span>
                 <span className="font-bold">{summary.breakdown.realWallets.toLocaleString()} ج.م</span>
               </div>
+              {summary.breakdown.allocatedWallets > 0 && (
+                <div className="flex justify-between items-center opacity-80">
+                  <span>مخصصات محجوزة</span>
+                  <span className="font-bold text-amber-100" dir="ltr">- {summary.breakdown.allocatedWallets.toLocaleString()} ج.م</span>
+                </div>
+              )}
               <div className="flex justify-between items-center">
-                <span>التزامات (إيجار، اشتراكات...)</span>
+                <span>التزامات (المتبقي منها)</span>
                 <span className="font-bold text-red-100" dir="ltr">- {summary.breakdown.commitments.toLocaleString()} ج.م</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span>أقساط ديون مستحقة</span>
-                <span className="font-bold text-red-100" dir="ltr">- {summary.breakdown.debts.toLocaleString()} ج.م</span>
-              </div>
+              {summary.breakdown.debtInstallments > 0 && (
+                <div className="flex justify-between items-center">
+                  <span>أقساط ديون مجدولة</span>
+                  <span className="font-bold text-red-100" dir="ltr">- {summary.breakdown.debtInstallments.toLocaleString()} ج.م</span>
+                </div>
+              )}
+              {summary.breakdown.debtFlexible > 0 && (
+                <div className="flex justify-between items-center opacity-80">
+                  <span>ديون مرنة مستحقة</span>
+                  <span className="font-bold text-red-100" dir="ltr">- {summary.breakdown.debtFlexible.toLocaleString()} ج.م</span>
+                </div>
+              )}
               <div className="flex justify-between items-center">
                 <span>أقساط جمعيات</span>
                 <span className="font-bold text-red-100" dir="ltr">- {summary.breakdown.gameya.toLocaleString()} ج.م</span>
@@ -147,6 +161,7 @@ export const Dashboard: React.FC = () => {
               </div>
             </div>
           )}
+
         </div>
         
         {/* Background Decorative Circles */}

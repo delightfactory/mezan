@@ -48,9 +48,11 @@ export const DebtsList: React.FC = () => {
     const isOverdue = debt.next_due_date && new Date(debt.next_due_date) < new Date() && !isSettled;
 
     if (activeTab === 'ARCHIVE') return isSettled;
-    if (activeTab === 'OVERDUE') return isOverdue && !isSettled;
-    if (activeTab === 'BORROWED') return debt.direction === 'BORROWED_FROM' && !isSettled && !isOverdue;
-    if (activeTab === 'LENT') return debt.direction === 'LENT_TO' && !isSettled && !isOverdue;
+    // OVERDUE: any active debt (either direction) past due date
+    if (activeTab === 'OVERDUE') return !!isOverdue && !isSettled;
+    // BORROWED/LENT: all active debts of that direction — overdue included
+    if (activeTab === 'BORROWED') return debt.direction === 'BORROWED_FROM' && !isSettled;
+    if (activeTab === 'LENT') return debt.direction === 'LENT_TO' && !isSettled;
     return false;
   });
 
@@ -100,7 +102,7 @@ export const DebtsList: React.FC = () => {
 
       <div className="space-y-3">
         {filteredDebts.length === 0 ? (
-          <EmptyState 
+          <EmptyState
             icon={Handshake}
             title="لا توجد بيانات"
             description="لا توجد سجلات مطابقة لهذا التصنيف."
@@ -109,14 +111,21 @@ export const DebtsList: React.FC = () => {
           />
         ) : (
           filteredDebts.map((debt) => {
-            const isOwedByUs = debt.direction === 'BORROWED_FROM'; // علينا
+            const isOwedByUs = debt.direction === 'BORROWED_FROM';
             const isSettled = debt.status === 'SETTLED' || debt.status === 'WRITTEN_OFF';
-            
+            const isOverdueCard = !!debt.next_due_date && new Date(debt.next_due_date) < new Date() && !isSettled;
+
             return (
-              <div 
-                key={debt.id} 
+              <div
+                key={debt.id}
                 onClick={() => navigate(`/debts/${debt.id}`)}
-                className={`cursor-pointer rounded-2xl border ${isSettled ? 'bg-gray-50/50 border-gray-100 grayscale-[0.5] opacity-75' : 'bg-white border-gray-100 shadow-sm'} p-4 transition-all hover:shadow-md flex flex-col`}
+                className={`cursor-pointer rounded-2xl border ${
+                  isSettled
+                    ? 'bg-gray-50/50 border-gray-100 grayscale-[0.5] opacity-75'
+                    : isOverdueCard
+                    ? 'bg-red-50 border-red-100 shadow-sm'
+                    : 'bg-white border-gray-100 shadow-sm'
+                } p-4 transition-all hover:shadow-md flex flex-col`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center">
@@ -124,8 +133,13 @@ export const DebtsList: React.FC = () => {
                       {isOwedByUs ? <ArrowDownRight size={24} /> : <ArrowUpRight size={24} />}
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900 text-sm">{debt.entity_name}</h3>
-                      <p className={`text-[10px] font-bold ${isOwedByUs ? 'text-rose-500' : 'text-emerald-500'}`}>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <h3 className="font-bold text-gray-900 text-sm">{debt.entity_name}</h3>
+                        {isOverdueCard && (
+                          <span className="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200">متأخر</span>
+                        )}
+                      </div>
+                      <p className={`text-[10px] font-bold ${isOverdueCard ? 'text-red-500' : isOwedByUs ? 'text-rose-500' : 'text-emerald-500'}`}>
                         {debt.debt_kind === 'GAMEYA' ? 'جمعية' : debt.debt_kind === 'INSTALLMENT' ? 'قسط' : isOwedByUs ? 'دين علينا' : 'مستحق لنا'}
                       </p>
                     </div>
@@ -135,7 +149,7 @@ export const DebtsList: React.FC = () => {
                     <span className="text-[10px] font-bold text-gray-400">من أصل {debt.original_amount.toLocaleString()}</span>
                   </div>
                 </div>
-                
+
                 {!isSettled ? (
                   <div className="flex items-center justify-between pt-3 border-t border-gray-50 mt-1">
                     <div className="flex items-center text-[10px] font-bold text-gray-400">
@@ -143,12 +157,19 @@ export const DebtsList: React.FC = () => {
                         <>تاريخ الاستحقاق: {new Date(debt.next_due_date).toLocaleDateString('ar-EG')}</>
                       )}
                     </div>
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/debts/${debt.id}/payment`);
+                        // Scheduled BORROWED_FROM debts → DebtDetails (pay from installment table)
+                        // LENT_TO or FLEXIBLE → direct payment page
+                        const goToDetails = isOwedByUs && debt.payment_schedule_type !== 'FLEXIBLE';
+                        navigate(goToDetails ? `/debts/${debt.id}` : `/debts/${debt.id}/payment`);
                       }}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 ${isOwedByUs ? 'bg-rose-600 text-white shadow-lg shadow-rose-200 hover:bg-rose-700' : 'bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700'}`}
+                      className={`px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 ${
+                        isOwedByUs
+                          ? 'bg-rose-600 text-white shadow-lg shadow-rose-200 hover:bg-rose-700'
+                          : 'bg-emerald-600 text-white shadow-lg shadow-emerald-200 hover:bg-emerald-700'
+                      }`}
                     >
                       {isOwedByUs ? 'سداد' : 'تحصيل'}
                     </button>

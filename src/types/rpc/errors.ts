@@ -44,6 +44,15 @@ export type RpcErrorCode =
   | 'MEMBERSHIP_CONFLICT'
   | 'MEMBERSHIP_PENDING'
   | 'ONE_FAMILY_LIMIT'
+  | 'INVALID_DEBT_OCCURRENCE'
+  | 'OCCURRENCE_OVERPAYMENT_NOT_ALLOWED'
+  | 'INVALID_DEBT_DIRECTION'
+  | 'INSTALLMENT_COUNT_REQUIRED'
+  | 'INVALID_INSTALLMENT_AMOUNT'
+  | 'INVALID_INSTALLMENT_PLAN'
+  | 'NEXT_DUE_DATE_REQUIRED'
+  | 'HAS_PARTIAL_PAYMENTS_REQUIRES_MANUAL_HANDLING'
+  | 'DEBT_OCCURRENCE_REQUIRED'
   | 'UNKNOWN_ERROR';
 
 /**
@@ -92,6 +101,15 @@ export const RpcErrorMessages: Record<RpcErrorCode, string> = {
   MEMBERSHIP_CONFLICT: 'Your account has conflicting membership states.',
   MEMBERSHIP_PENDING: 'You have a pending family invitation.',
   ONE_FAMILY_LIMIT: 'User already has an active family membership.',
+  INVALID_DEBT_OCCURRENCE: 'The specified debt occurrence is invalid or not payable.',
+  OCCURRENCE_OVERPAYMENT_NOT_ALLOWED: 'Payment amount exceeds the remaining installment balance.',
+  INVALID_DEBT_DIRECTION: 'This action is only allowed for borrowed debts.',
+  INSTALLMENT_COUNT_REQUIRED: 'Number of installments is required for monthly installment plans.',
+  INVALID_INSTALLMENT_AMOUNT: 'Installment amount must be greater than zero.',
+  INVALID_INSTALLMENT_PLAN: 'Installment plan is inconsistent with the total debt amount.',
+  NEXT_DUE_DATE_REQUIRED: 'Due date is required for this payment schedule type.',
+  HAS_PARTIAL_PAYMENTS_REQUIRES_MANUAL_HANDLING: 'Cannot reschedule a debt that has partially paid installments.',
+  DEBT_OCCURRENCE_REQUIRED: 'This debt has a payment schedule. Please pay via the installment table.',
   UNKNOWN_ERROR: 'An unknown error occurred.',
 };
 

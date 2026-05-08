@@ -102,6 +102,23 @@ export const receiveLoanSchema = z.object({
   p_priority_level: debtPriorityLevelSchema,
   p_counterparty_phone: z.string().optional(),
   p_counterparty_notes: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.p_payment_schedule_type === 'MONTHLY_INSTALLMENT') {
+    if (!data.p_next_due_date) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['p_next_due_date'], message: 'تاريخ أول قسط مطلوب عند الجدولة الشهرية' });
+    }
+    if (!data.p_monthly_installment) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['p_monthly_installment'], message: 'قيمة القسط الشهري مطلوبة' });
+    }
+    if (!data.p_installment_count) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['p_installment_count'], message: 'عدد الأقساط مطلوب' });
+    }
+  }
+  if (data.p_payment_schedule_type === 'ONE_TIME') {
+    if (!data.p_next_due_date) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['p_next_due_date'], message: 'تاريخ السداد مطلوب عند الدفعة الواحدة' });
+    }
+  }
 });
 
 export const updateDebtMetadataSchema = z.object({
@@ -120,6 +137,23 @@ export const rescheduleDebtSchema = z.object({
   p_next_due_date: dateOnlySchema.optional(),
   p_monthly_installment: positiveAmountSchema.optional(),
   p_installment_count: z.number().int().min(1).optional(),
+}).superRefine((data, ctx) => {
+  if (data.p_payment_schedule_type === 'MONTHLY_INSTALLMENT') {
+    if (!data.p_next_due_date) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['p_next_due_date'], message: 'تاريخ أول قسط مطلوب' });
+    }
+    if (!data.p_monthly_installment) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['p_monthly_installment'], message: 'قيمة القسط الشهري مطلوبة' });
+    }
+    if (!data.p_installment_count) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['p_installment_count'], message: 'عدد الأقساط مطلوب' });
+    }
+  }
+  if (data.p_payment_schedule_type === 'ONE_TIME') {
+    if (!data.p_next_due_date) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['p_next_due_date'], message: 'تاريخ السداد مطلوب' });
+    }
+  }
 });
 
 export const writeOffDebtSchema = z.object({
@@ -137,6 +171,8 @@ export const recordPayrollDeductedIncomeSchema = z.object({
   p_category_id: uuidSchema,
   p_description: z.string().optional(),
   p_effective_at: isoDateSchema,
+  // Occurrence linkage: preserves the field through Zod parse so it reaches the RPC
+  p_debt_due_occurrence_id: uuidSchema.optional(),
 });
 
 export const recordDebtPaymentSchema = z.object({
@@ -144,6 +180,8 @@ export const recordDebtPaymentSchema = z.object({
   p_debt_id: uuidSchema,
   p_wallet_id: uuidSchema,
   p_amount: positiveAmountSchema,
+  // Occurrence linkage: preserves the field through Zod parse so it reaches the RPC
+  p_debt_due_occurrence_id: uuidSchema.optional(),
 });
 
 // --- Gameya ---

@@ -437,11 +437,66 @@ export type Database = {
           },
         ]
       }
+      debt_due_occurrences: {
+        Row: {
+          id: string
+          family_id: string
+          debt_id: string
+          due_date: string
+          amount: number
+          paid_amount: number
+          status: Database["public"]["Enums"]["occurrence_status"]
+          sequence_no: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          family_id: string
+          debt_id: string
+          due_date: string
+          amount: number
+          paid_amount?: number
+          status?: Database["public"]["Enums"]["occurrence_status"]
+          sequence_no?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          family_id?: string
+          debt_id?: string
+          due_date?: string
+          amount?: number
+          paid_amount?: number
+          status?: Database["public"]["Enums"]["occurrence_status"]
+          sequence_no?: number | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "debt_due_occurrences_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "family_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "debt_due_occurrences_debt_id_fkey"
+            columns: ["debt_id"]
+            isOneToOne: false
+            referencedRelation: "debts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       debt_payments: {
         Row: {
           amount: number
           created_at: string
           debt_id: string
+          debt_due_occurrence_id: string | null
           family_id: string
           id: string
           paid_at: string
@@ -451,6 +506,7 @@ export type Database = {
           amount: number
           created_at?: string
           debt_id: string
+          debt_due_occurrence_id?: string | null
           family_id: string
           id?: string
           paid_at?: string
@@ -460,6 +516,7 @@ export type Database = {
           amount?: number
           created_at?: string
           debt_id?: string
+          debt_due_occurrence_id?: string | null
           family_id?: string
           id?: string
           paid_at?: string
@@ -485,6 +542,13 @@ export type Database = {
             columns: ["transaction_id"]
             isOneToOne: false
             referencedRelation: "ledger_transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "debt_payments_debt_due_occurrence_id_fkey"
+            columns: ["debt_due_occurrence_id"]
+            isOneToOne: false
+            referencedRelation: "debt_due_occurrences"
             referencedColumns: ["id"]
           },
         ]
@@ -1726,6 +1790,7 @@ export type Database = {
         Args: {
           p_amount: number
           p_debt_id: string
+          p_debt_due_occurrence_id?: string
           p_family_id: string
           p_wallet_id: string
         }
@@ -1785,6 +1850,7 @@ export type Database = {
       fn_record_payroll_deducted_income: {
         Args: {
           p_category_id: string
+          p_debt_due_occurrence_id?: string
           p_debt_id: string
           p_deducted_amount: number
           p_description?: string

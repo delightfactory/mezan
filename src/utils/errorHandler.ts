@@ -1,4 +1,4 @@
-﻿import { RpcError } from '../types/rpc/errors';
+import { RpcError } from '../types/rpc/errors';
 
 export function getArabicErrorMessage(err: unknown): string {
   if (err instanceof RpcError) {
@@ -19,6 +19,12 @@ export function getArabicErrorMessage(err: unknown): string {
         return 'المبلغ المدخل أكبر من المتبقي.';
       case 'DEBT_NOT_FOUND':
         return 'لم يتم العثور على الدين.';
+      case 'DEBT_OCCURRENCE_REQUIRED':
+        return 'هذا الدين له جدول أقساط — يرجى السداد من القسط المحدد في جدول الأقساط.';
+      case 'OCCURRENCE_OVERPAYMENT_NOT_ALLOWED':
+        return 'المبلغ أكبر من المتبقي لهذا القسط. سدّد المتبقي فقط أو اختر قسطاً آخر.';
+      case 'INVALID_DEBT_OCCURRENCE':
+        return 'القسط المحدد غير صالح أو لا ينتمي لهذا الدين.';
       case 'GAMEYA_NOT_FOUND':
         return 'لم يتم العثور على الجمعية.';
       case 'GAMEYA_NOT_FOUND_OR_NOT_IN_SAVING_PHASE':

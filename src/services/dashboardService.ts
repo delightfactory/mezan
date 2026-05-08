@@ -9,7 +9,15 @@ import { calculateSafeToSpendSchema } from '../types/schemas';
 
 export interface SafeToSpendBreakdown {
   realWallets: number;
+  /** رصيد المحافظ المخصصة (ALLOCATED) — يُخصم من الرصيد الحقيقي */
+  allocatedWallets: number;
+  /** الالتزامات الثابتة: مجموع (amount - paid_amount) للاستحقاقات المفتوحة */
   commitments: number;
+  /** أقساط الديون من debt_due_occurrences (BORROWED_FROM فقط) */
+  debtInstallments: number;
+  /** ديون مرنة/قديمة لا استحقاقات مسجلة (legacy fallback) */
+  debtFlexible: number;
+  /** إجمالي التزامات الديون */
   debts: number;
   gameya: number;
   monthlyExpenses: number;
@@ -41,63 +49,177 @@ export function createDashboardService(client: TypedSupabaseClient) {
     async getSafeToSpendBreakdown(familyId: string): Promise<SafeToSpendBreakdown> {
       try {
         const now = new Date();
+        const endOfMonth   = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0];
 
-        // 1. Get all base data
         const [
           realWalletsRes,
+          allocatedWalletsRes,
+          // ─── Commitments: amount + paid_amount (for PARTIALLY_PAID support) ───
           occurrencesRes,
+          // ─── Debt occurrences (new system) ───
+          debtOccurrencesRes,
+          // ─── All debts for legacy fallback ───
           debtsRes,
           gameyaTurnsRes,
           gameyaInstallmentsRes,
           expensesRes,
-          allGameyaInstallmentsRes
+          allGameyaInstallmentsRes,
+          // ─── Debts that already have occurrence rows ───
+          debtsWithOccurrencesRes,
         ] = await Promise.all([
-          client.from('wallets').select('balance').eq('family_id', familyId).eq('type', 'REAL').eq('is_archived', false),
-          client.from('commitment_occurrences').select('amount').eq('family_id', familyId).in('status', ['UPCOMING', 'OVERDUE']).lte('due_date', endOfMonth),
-          client.from('debts').select('monthly_installment, remaining_amount, due_date').eq('family_id', familyId).eq('status', 'ACTIVE').eq('direction', 'BORROWED_FROM'),
-          client.from('gameya_turns').select('gameya_id, gameya_circles!inner(monthly_installment, is_flexible)').eq('family_id', familyId).eq('status', 'UPCOMING').lte('due_date', endOfMonth),
-          client.from('gameya_installments').select('gameya_id, amount').eq('family_id', familyId).in('status', ['UPCOMING', 'OVERDUE']).lte('due_date', endOfMonth),
-          client.from('ledger_transactions').select('amount').eq('family_id', familyId).eq('type', 'EXPENSE').gte('effective_at', startOfMonth).lte('effective_at', endOfMonth + 'T23:59:59Z'),
-          client.from('gameya_installments').select('gameya_id').eq('family_id', familyId)
+          client
+            .from('wallets')
+            .select('balance')
+            .eq('family_id', familyId)
+            .eq('type', 'REAL')
+            .eq('is_archived', false),
+
+          // NEW: fetch ALLOCATED wallets to match DB formula
+          client
+            .from('wallets')
+            .select('balance')
+            .eq('family_id', familyId)
+            .eq('type', 'ALLOCATED')
+            .eq('is_archived', false),
+
+          // FIX: fetch amount + paid_amount, include PARTIALLY_PAID
+          client
+            .from('commitment_occurrences')
+            .select('amount, paid_amount')
+            .eq('family_id', familyId)
+            .in('status', ['UPCOMING', 'OVERDUE', 'PARTIALLY_PAID'])
+            .lte('due_date', endOfMonth),
+
+          // debt_due_occurrences pending this month
+          client
+            .from('debt_due_occurrences')
+            .select('amount, paid_amount, debt_id')
+            .eq('family_id', familyId)
+            .in('status', ['UPCOMING', 'OVERDUE', 'PARTIALLY_PAID'])
+            .lte('due_date', endOfMonth),
+
+          client
+            .from('debts')
+            .select('id, monthly_installment, remaining_amount, next_due_date, payment_schedule_type')
+            .eq('family_id', familyId)
+            .eq('status', 'ACTIVE')
+            .eq('direction', 'BORROWED_FROM'),
+
+          client
+            .from('gameya_turns')
+            .select('gameya_id, gameya_circles!inner(monthly_installment, is_flexible)')
+            .eq('family_id', familyId)
+            .eq('status', 'UPCOMING')
+            .lte('due_date', endOfMonth),
+
+          client
+            .from('gameya_installments')
+            .select('gameya_id, amount')
+            .eq('family_id', familyId)
+            .in('status', ['UPCOMING', 'OVERDUE'])
+            .lte('due_date', endOfMonth),
+
+          client
+            .from('ledger_transactions')
+            .select('amount')
+            .eq('family_id', familyId)
+            .eq('type', 'EXPENSE')
+            .gte('effective_at', startOfMonth)
+            .lte('effective_at', endOfMonth + 'T23:59:59Z'),
+
+          client
+            .from('gameya_installments')
+            .select('gameya_id')
+            .eq('family_id', familyId),
+
+          // Which debt IDs have ANY occurrence row?
+          client
+            .from('debt_due_occurrences')
+            .select('debt_id')
+            .eq('family_id', familyId),
         ]);
 
-        const totalReal = realWalletsRes.data?.reduce((sum, w) => sum + Number(w.balance), 0) || 0;
-        const totalCommits = occurrencesRes.data?.reduce((sum, c) => sum + Number(c.amount), 0) || 0;
-        
-        let totalDebts = 0;
-        debtsRes.data?.forEach(d => {
+        // ── Error guards: fail loudly on ANY query failure ───────────────────────
+        // Every component feeds the safe-to-spend formula — no silent zeros allowed.
+        if (realWalletsRes.error)           throw realWalletsRes.error;
+        if (allocatedWalletsRes.error)      throw allocatedWalletsRes.error;
+        if (occurrencesRes.error)           throw occurrencesRes.error;
+        if (debtOccurrencesRes.error)       throw debtOccurrencesRes.error;
+        if (debtsRes.error)                 throw debtsRes.error;
+        if (gameyaTurnsRes.error)           throw gameyaTurnsRes.error;
+        if (gameyaInstallmentsRes.error)    throw gameyaInstallmentsRes.error;
+        if (allGameyaInstallmentsRes.error) throw allGameyaInstallmentsRes.error;
+        if (debtsWithOccurrencesRes.error)  throw debtsWithOccurrencesRes.error;
+        if (expensesRes.error)              throw expensesRes.error;
+
+        // ── Real wallets ────────────────────────────────────────────────────────
+        const totalReal      = realWalletsRes.data.reduce((s, w) => s + Number(w.balance), 0);
+        const totalAllocated = allocatedWalletsRes.data.reduce((s, w) => s + Number(w.balance), 0);
+
+        // ── Commitments: SUM(amount - paid_amount) to match DB formula ──────────
+        // This correctly handles PARTIALLY_PAID occurrences.
+        const totalCommits = occurrencesRes.data.reduce(
+          (s, c) => s + Math.max(Number(c.amount) - Number(c.paid_amount), 0), 0
+        );
+
+        // ── Debt installments via debt_due_occurrences ───────────────────────────
+        const debtIdsWithOccurrences = new Set(
+          debtsWithOccurrencesRes.data?.map(r => r.debt_id) || []
+        );
+        const totalDebtInstallments = debtOccurrencesRes.data.reduce(
+          (s, o) => s + Math.max(Number(o.amount) - Number(o.paid_amount), 0), 0
+        );
+
+        // ── Legacy flexible debts (no occurrences) ───────────────────────────────
+        let totalDebtFlexible = 0;
+        debtsRes.data.forEach(d => {
+          if (debtIdsWithOccurrences.has(d.id)) return; // already counted via occurrences
           const installment = Number(d.monthly_installment || 0);
-          const remaining = Number(d.remaining_amount || 0);
+          const remaining   = Number(d.remaining_amount || 0);
           if (installment > 0) {
-            totalDebts += Math.min(installment, remaining);
-          } else if (d.due_date && d.due_date <= endOfMonth) {
-            totalDebts += remaining;
+            totalDebtFlexible += Math.min(installment, remaining);
+          } else if (d.next_due_date && d.next_due_date <= endOfMonth) {
+            totalDebtFlexible += remaining;
           }
         });
 
-        // 2. Complex Gameya logic to prevent double-counting
-        // Rule: If a gameya_id has ANY installments, ignore its legacy turns.
-        const allGameyasWithInstallments = new Set(allGameyaInstallmentsRes.data?.map(i => i.gameya_id) || []);
-        
-        const totalGameyaTurns = gameyaTurnsRes.data?.reduce((sum, t: any) => {
-          if (allGameyasWithInstallments.has(t.gameya_id)) return sum;
-          return sum + Number(t.gameya_circles?.monthly_installment || 0);
-        }, 0) || 0;
+        const totalDebts = totalDebtInstallments + totalDebtFlexible;
 
-        const totalGameyaInstallments = gameyaInstallmentsRes.data?.reduce((sum, i) => sum + Number(i.amount), 0) || 0;
+        // ── Gameya: prevent double-counting turns vs installments ────────────────
+        const allGameyasWithInstallments = new Set(
+          allGameyaInstallmentsRes.data?.map(i => i.gameya_id) || []
+        );
+        const totalGameyaTurns = gameyaTurnsRes.data?.reduce((s, t: any) => {
+          if (allGameyasWithInstallments.has(t.gameya_id)) return s;
+          return s + Number(t.gameya_circles?.monthly_installment || 0);
+        }, 0) || 0;
+        const totalGameyaInstallments = gameyaInstallmentsRes.data?.reduce(
+          (s, i) => s + Number(i.amount), 0
+        ) || 0;
         const totalGameya = totalGameyaTurns + totalGameyaInstallments;
 
-        const totalExpenses = expensesRes.data?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+        const totalExpenses = expensesRes.data?.reduce(
+          (s, e) => s + Number(e.amount), 0
+        ) || 0;
+
+        // ── Safe-to-spend: matches DB formula exactly ────────────────────────────
+        // DB: v_real - v_alloc - v_commits - v_debt_occ - v_debt_legacy - v_gameya
+        const safeToSpend = Math.max(
+          totalReal - totalAllocated - totalCommits - totalDebts - totalGameya,
+          0
+        );
 
         return {
-          realWallets: totalReal,
-          commitments: totalCommits,
-          debts: totalDebts,
-          gameya: totalGameya,
-          monthlyExpenses: totalExpenses,
-          safeToSpend: Math.max(totalReal - totalCommits - totalDebts - totalGameya, 0)
+          realWallets:       totalReal,
+          allocatedWallets:  totalAllocated,
+          commitments:       totalCommits,
+          debtInstallments:  totalDebtInstallments,
+          debtFlexible:      totalDebtFlexible,
+          debts:             totalDebts,
+          gameya:            totalGameya,
+          monthlyExpenses:   totalExpenses,
+          safeToSpend,
         };
       } catch (err) {
         throw mapPostgresError(err);
@@ -112,34 +234,34 @@ export function createDashboardService(client: TypedSupabaseClient) {
           commitmentsRes,
           debtsRes,
           gameyaRes,
-          breakdown
+          breakdown,
         ] = await Promise.all([
           client.from('wallets').select('*').eq('family_id', familyId).order('sort_order'),
           client.from('ledger_transactions').select('*').eq('family_id', familyId).order('effective_at', { ascending: false }).order('created_at', { ascending: false }).limit(7),
           client.from('commitments').select('*').eq('family_id', familyId).eq('is_active', true).order('start_date', { ascending: true }),
           client.from('debts').select('*').eq('family_id', familyId).eq('status', 'ACTIVE').order('created_at', { ascending: false }),
           client.from('gameya_circles').select('*').eq('family_id', familyId).neq('status', 'CANCELLED').order('start_date', { ascending: false }),
-          this.getSafeToSpendBreakdown(familyId)
+          this.getSafeToSpendBreakdown(familyId),
         ]);
 
-        if (walletsRes.error) throw walletsRes.error;
+        if (walletsRes.error)      throw walletsRes.error;
         if (transactionsRes.error) throw transactionsRes.error;
-        if (commitmentsRes.error) throw commitmentsRes.error;
-        if (debtsRes.error) throw debtsRes.error;
-        if (gameyaRes.error) throw gameyaRes.error;
+        if (commitmentsRes.error)  throw commitmentsRes.error;
+        if (debtsRes.error)        throw debtsRes.error;
+        if (gameyaRes.error)       throw gameyaRes.error;
 
         return {
-          wallets: walletsRes.data as Wallet[],
+          wallets:            walletsRes.data as Wallet[],
           recentTransactions: transactionsRes.data as LedgerTransaction[],
-          commitments: commitmentsRes.data as Commitment[],
-          debts: debtsRes.data as Debt[],
-          gameyaCircles: gameyaRes.data as GameyaCircle[],
-          safeToSpend: breakdown.safeToSpend,
-          breakdown: breakdown
+          commitments:        commitmentsRes.data as Commitment[],
+          debts:              debtsRes.data as Debt[],
+          gameyaCircles:      gameyaRes.data as GameyaCircle[],
+          safeToSpend:        breakdown.safeToSpend,
+          breakdown,
         };
       } catch (err) {
         throw mapPostgresError(err);
       }
-    }
+    },
   };
 }
